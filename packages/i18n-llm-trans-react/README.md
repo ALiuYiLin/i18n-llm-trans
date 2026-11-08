@@ -1,13 +1,15 @@
 # @10coding/i18n-llm-trans-react
 
-基于 **中文键 / 中文值** 的 React i18n 运行时，支持 `__TRANS_ID` 一词多译，底层使用
-[i18next](https://www.i18next.com/) + [react-i18next](https://react.i18next.com/)。
+基于 **源语言原文即 key（source-text-as-key）** 的 React i18n 运行时，支持 `__TRANS_ID`
+一词多译，底层使用 [i18next](https://www.i18next.com/) + [react-i18next](https://react.i18next.com/)。
 
-- 源语言（默认 `zh-CN`）直接用中文原文做 key，`en-US.json` 用同样的中文 key 映射译文；
-- 同一个中文原文需要多种译文时，用 `t('删除', { __TRANS_ID: 'delete' })` 区分，
+- 源语言由 `sourceLocale` 指定（本仓库示例为 `zh-CN`）：源语言文件「键 = 原文，值 = 原文」，
+  目标语言文件用同样的原文 key 映射译文；
+- 不绑定中文：任意语言都可以作为源语言，见下方「可以用其他语言作为 key 吗？」；
+- 同一个原文需要多种译文时，用 `t('删除', { __TRANS_ID: 'delete' })` 区分，
   简写 `t('删除', 'delete')` 等价；
 - 标记名、分隔符、检测顺序、存储 key、标题模板全部可配置；
-- 类型从 `zh-CN.json` 推导，`t()` 的 key 有编译期校验。
+- 类型从源语言 JSON 推导，`t()` 的 key 有编译期校验。
 
 ## 安装
 
@@ -76,8 +78,8 @@ export function Demo() {
 
 | 选项 | 说明 | 默认值 |
 | --- | --- | --- |
-| `messages` | 语言资源，键为中文原文 | 必填 |
-| `sourceLocale` | 源语言（中文 key 所在语言） | `messages` 第一个 key |
+| `messages` | 语言资源，源语言的键为原文 | 必填 |
+| `sourceLocale` | 源语言（key 所在语言，不限于中文） | `messages` 第一个 key |
 | `fallbackLocale` | 缺翻译时的回退语言 | `sourceLocale` |
 | `supportedLocales` | 支持的语言列表 | `Object.keys(messages)` |
 | `detection` | `{ order, storageKey, storage, normalize }` 或 `false` | `['storage','browser','default']` |
@@ -88,10 +90,41 @@ export function Demo() {
 
 ## 回退规则
 
-1. 当前语言 `<中文原文><separator><id>`；
-2. 缺失时用基础 `<中文原文>` 的当前语言译文；
-3. 再缺失时回退到中文源文案；
-4. 源语言始终直接展示中文原文。
+1. 当前语言 `<原文><separator><id>`；
+2. 缺失时用基础 `<原文>` 的当前语言译文；
+3. 再缺失时回退到源语言原文；
+4. 源语言始终直接展示原文。
+
+## 可以用其他语言作为 key 吗？
+
+可以。运行时只认「源语言（`sourceLocale`）的键」，不关心键里是不是中文。把
+`sourceLocale` 设为英文即可用英文原文做 key：
+
+```ts
+createI18nRuntime({
+  sourceLocale: 'en-US',
+  messages: {
+    'en-US': { 'Delete': 'Delete', 'Settings': 'Settings' },
+    'zh-CN': {
+      'Delete': '删除',
+      'Delete__TRANS_ID_remove': '移除',
+      'Settings': '设置',
+    },
+  },
+})
+```
+
+```ts
+t('Delete') // zh-CN → 删除；en-US → Delete
+t('Delete', 'remove') // zh-CN → 移除
+```
+
+包内没有硬编码 `zh-CN`：`sourceLocale`、`fallbackLocale`、语言检测、`__TRANS_ID`
+标记配置都与语言无关。本仓库的 playground 与文档示例选择中文，只是演示用法。
+
+注意：如果源语言文本里包含 `.`、`:`、`{`、`}` 等特殊字符，i18next 默认会当成 key /
+插值语法；本包已关闭 keySeparator、nsSeparator，插值符号也可以通过 `interpolation`
+配置成别的形式。
 
 ## 说明
 

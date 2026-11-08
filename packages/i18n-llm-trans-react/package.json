@@ -1,7 +1,7 @@
 {
   "name": "@10coding/i18n-llm-trans-react",
   "version": "0.1.0",
-  "description": "React runtime for Chinese-key i18n with __TRANS_ID one-source-multiple-translations support, built on i18next.",
+  "description": "React i18n runtime that uses source-locale text as translation keys, with __TRANS_ID one-source-multiple-translations support, built on i18next.",
   "type": "module",
   "sideEffects": false,
   "license": "MIT",
@@ -10,7 +10,8 @@
     "react",
     "i18next",
     "react-i18next",
-    "chinese-key",
+    "source-text-key",
+    "text-as-key",
     "translation"
   ],
   "files": [

@@ -18,7 +18,7 @@ export function resolveTransIdConfig(options?: TransIdOptions): ResolvedTransIdC
 export interface TranslateParams {
   /** Current locale. */
   locale: string
-  /** Locale that owns the Chinese keys. */
+  /** Locale whose text is used as keys. */
   sourceLocale: string
   transId: ResolvedTransIdConfig
   /** Bound `i18n.t` that always returns a string. */
@@ -26,13 +26,13 @@ export interface TranslateParams {
 }
 
 /**
- * Translate a Chinese source key with optional `__TRANS_ID` disambiguation.
+ * Translate a source-text key with optional `__TRANS_ID` disambiguation.
  *
  * Lookup order for a target locale:
  * 1. `<source><separator><id>`
  * 2. base `<source>` translation
- * 3. Chinese source text (i18next fallback to the source locale)
- * The source locale always returns the plain Chinese key.
+ * 3. source-locale text (i18next fallback to the source locale)
+ * The source locale always returns the plain source text.
  */
 export function translateWith(
   source: string,

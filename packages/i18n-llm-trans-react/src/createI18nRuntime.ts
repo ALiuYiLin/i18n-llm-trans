@@ -39,7 +39,7 @@ function getNavigatorLanguages(): readonly string[] {
 }
 
 /**
- * Create the Chinese-key i18n runtime for an app.
+ * Create the source-text-key i18n runtime for an app.
  *
  * The package follows a single-instance convention: call this once per app and
  * re-export the returned helpers from your own `src/i18n/index.ts`.
@@ -105,7 +105,7 @@ export function createI18nRuntime<
     lng: detected.locale,
     fallbackLng: fallbackLocale,
     supportedLngs: [...supportedLocales],
-    // Chinese keys are flat strings that may contain '.', ':' or '/' characters.
+    // Source-text keys are flat strings that may contain '.', ':' or '/' characters.
     keySeparator: false,
     nsSeparator: false,
     interpolation: {

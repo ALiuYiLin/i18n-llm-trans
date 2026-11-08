@@ -34,10 +34,24 @@ function createParams(locale: string, dictionary: Record<string, string>): Trans
 }
 
 describe('translateWith', () => {
-  it('returns the Chinese source text for the source locale', () => {
+  it('returns the source text for the source locale', () => {
     expect(translateWith('删除', { __TRANS_ID: 'delete' }, createParams('zh-CN', zhMessages))).toBe(
       '删除',
     )
+  })
+
+  it('supports any source language as keys', () => {
+    const dictionary: Record<string, string> = {
+      'Delete': 'Delete',
+      'Delete__TRANS_ID_remove': '移除',
+    }
+    const params: TranslateParams = {
+      ...createParams('zh-CN', dictionary),
+      sourceLocale: 'en-US',
+    }
+
+    expect(translateWith('Delete', 'remove', params)).toBe('移除')
+    expect(translateWith('Delete', undefined, { ...params, locale: 'en-US' })).toBe('Delete')
   })
 
   it('resolves the full options form', () => {

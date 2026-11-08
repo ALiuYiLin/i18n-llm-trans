@@ -4,9 +4,10 @@
 
 - `packages/i18n-llm-trans-react`：可发布的 React i18n 运行时
   （[`@10coding/i18n-llm-trans-react`](packages/i18n-llm-trans-react/README.md)），
-  实现**中文键 / 中文值**与 `__TRANS_ID` 一词多译；
+  实现**源语言原文即 key**（示例为中文键）与 `__TRANS_ID` 一词多译；
 - ` playground/` 下 **Vue** 与 **React** 两个演练应用：Vue 使用语义化 key（vue-i18n），
-  React 使用上述包（中文键方案），便于对比两种维护方式，也便于后续接入 LLM 批量翻译语言包。
+  React 使用上述包（本仓库以中文为源语言），便于对比两种维护方式，也便于后续接入 LLM
+  批量翻译语言包。
 
 ## 目录结构
 
@@ -97,7 +98,8 @@ export const { i18nReady, useI18n, translate, setLocale, applyDocumentMetadata }
 
 能力与约束：
 
-- 中文键 / 中文值、`__TRANS_ID` 一词多译、简写 `t('删除', 'delete')`；
+- 源语言原文即 key（`sourceLocale` 可设为任意语言）、`__TRANS_ID` 一词多译、
+  简写 `t('删除', 'delete')`；
 - 语言检测（storage → browser → default）、持久化、`<html lang>` 与 `document.title` 同步；
 - `transId`、`detection`、`document`、插值语法均可配置；
 - 类型从 `zh-CN.json` 推导，`t()` 的 key 有编译期约束；
@@ -126,7 +128,10 @@ export const { i18nReady, useI18n, translate, setLocale, applyDocumentMetadata }
 - Vue：`createI18n({ legacy: false })` + `useI18n()`。
 - React：`@10coding/i18n-llm-trans-react` 的 `createI18nRuntime()` + `useI18n()`。
 
-### React：中文键 / 中文值 + `__TRANS_ID`
+### React：中文键 / 中文值 + `__TRANS_ID`（本仓库示例）
+
+> 包本身与语言无关：把 `sourceLocale` 设为其他语言，就可以用英文等原文作为 key，
+> 详见[包 README](packages/i18n-llm-trans-react/README.md)。
 
 - `zh-CN.json`：键 = 中文原文，值 = 中文原文，同时作为待翻译文案清单。
 - `en-US.json`：键与 `zh-CN.json` 相同，值为对应译文。

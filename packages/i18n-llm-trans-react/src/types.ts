@@ -67,9 +67,9 @@ export interface RuntimeOptions<
   Source extends keyof Messages & string = keyof Messages & string,
   Option extends string = '__TRANS_ID',
 > {
-  /** Chinese-key messages: `{ 'zh-CN': zhCN, 'en-US': enUS }`. */
+  /** Source-locale messages: the source locale's keys are its source text. */
   messages: Messages
-  /** Source locale (the locale that owns the Chinese keys), defaults to the first messages key. */
+  /** Source locale (the locale whose text is used as keys), defaults to the first messages key. */
   sourceLocale?: Source
   /** Locale used when a translation is missing, defaults to `sourceLocale`. */
   fallbackLocale?: Source
