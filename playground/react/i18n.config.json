@@ -3,7 +3,7 @@
   "exclude": ["src/**/*.test.{ts,tsx}", "src/**/*.d.ts"],
   "localesDir": "src/locales",
   "sourceLocale": "zh-CN",
-  "targetLocales": ["en-US"],
+  "targetLocales": ["en-US", "ja-JP"],
   "callers": ["t", "translate"],
   "transId": {
     "option": "__TRANS_ID",
@@ -16,9 +16,6 @@
     "hints": {
       "删除__TRANS_ID_remove": "从角色组中移出用户，对象仍然存在，不是销毁数据"
     },
-    "glossary": {
-      "仪表盘": "dashboard",
-      "角色组": "role group"
-    }
+    "glossary": {}
   }
 }

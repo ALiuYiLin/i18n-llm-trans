@@ -178,7 +178,7 @@ I18N_LLM_MODEL=gpt-4o-mini
 1. **语言资源文件**：`src/locales/en-US.json`、`src/locales/zh-CN.json`，由 Vite 直接打包。
 2. **自动检测**：首次访问依次尝试 `localStorage` 偏好 → 浏览器语言 → 默认语言。
    - Vue：`zh-*` 命中中文，其余浏览器默认 `en-US`。
-   - React：`zh-*` / `en-*` 分别命中中文 / 英文，其余浏览器语言使用中文源语言。
+   - React：`zh-*` / `en-*` / `ja-*` 分别命中中文 / 英文 / 日文，其余浏览器语言使用中文源语言。
 3. **手动切换**：页面右上角的语言下拉框，切换后所有文案即时更新，不会刷新页面。
 4. **偏好持久化**：选择结果写入 `localStorage`（键：`i18n-playground:locale`），下次访问自动恢复。
 5. **文档元信息同步**：切换语言时同步更新 `<html lang>` 与 `document.title`。
