@@ -56,6 +56,7 @@ pnpm dev:vue      # http://localhost:5173
 pnpm build        # 递归构建：包 → 两个应用
 
 pnpm i18n:check   # 静态扫描 t()，检查语言 JSON（源语言 + 目标语言）
+pnpm i18n:trans   # 用 LLM 翻译未翻译 / 占位 key（先配置 playground/react/.env）
 ```
 
 ## 预览
@@ -81,6 +82,7 @@ pnpm i18n:check   # 静态扫描 t()，检查语言 JSON（源语言 + 目标语
 | `pnpm i18n:check:source` | 只检查源语言                                    |
 | `pnpm i18n:check:target` | 只检查目标语言                                  |
 | `pnpm i18n:fix`       | 补源语言 key、补目标语言占位 key、删除未使用 / 多余 key |
+| `pnpm i18n:trans`     | 用 OpenAI-compatible LLM 翻译未翻译 / 占位 key      |
 | `pnpm test`           | 运行包与 CLI 的单元测试（vitest）                   |
 | `pnpm typecheck`      | 先构建包，再递归执行类型检查                        |
 | `pnpm preview:vue`    | 预览 Vue 应用的生产构建                             |
@@ -88,7 +90,8 @@ pnpm i18n:check   # 静态扫描 t()，检查语言 JSON（源语言 + 目标语
 
 > React 应用通过 `workspace:*` 引用本地包，`pnpm dev:react` / `pnpm build:react` /
 > `pnpm typecheck` 都会先构建包产出 `dist`（类型声明与 ESM/CJS 产物）。
-> `i18n:check*` 脚本会先构建 CLI 包，再执行检查。
+> `i18n:check*` 与 `i18n:trans` 脚本会先构建 CLI 包；`trans` 需要在
+> `playground/react/.env` 配置模型（参考 [.env.example](playground/react/.env.example)）。
 
 ## 可复用包：`@10coding/i18n-llm-trans-react`
 
@@ -123,10 +126,10 @@ export const { i18nReady, useI18n, translate, setLocale, applyDocumentMetadata }
 
 完整 API、配置项与回退规则见 [包 README](packages/i18n-llm-trans-react/README.md)。
 
-## CLI：`i18n:check`
+## CLI：`i18n:check` / `i18n:trans`
 
-`packages/i18n-llm-trans-cli` 用 Babel 静态扫描 `t()` 调用，与语言 JSON 对比。扫描逻辑与框架无关
-（React 先行，换 `callers` 即可适配其他写法）：
+`packages/i18n-llm-trans-cli` 用 Babel 静态扫描 `t()` 调用，与语言 JSON 对比；`trans` 再通过
+OpenAI-compatible LLM 补齐译文。扫描逻辑与框架无关（React 先行，换 `callers` 即可适配其他写法）：
 
 ```bash
 pnpm i18n:check          # 源语言 + 目标语言
@@ -134,6 +137,7 @@ pnpm i18n:check:source   # 只检查源语言
 pnpm i18n:check:target   # 只检查目标语言
 
 pnpm i18n:fix            # 等价于 check --add --add-target --remove
+pnpm i18n:trans          # 翻译未翻译 / 占位 key（需要 .env）
 ```
 
 规则：
@@ -142,10 +146,27 @@ pnpm i18n:fix            # 等价于 check --add --add-target --remove
 - **源语言 unused**：JSON 有、但代码里既没有静态 `t()` 调用、也没有以字符串字面量出现 →
   只警告，`--remove` 才删除（字面量出现视为间接使用，避免误删动态 key）；
 - **目标语言 missing**：期望 key（源语言全部 key + 代码中的 `__TRANS_ID` 变体）缺少译文 →
-  默认只报告；`--add-target` 用源语言原文写入占位值，之后仍需人工 / LLM 翻译；
+  默认只报告；`--add-target` 写 marker 占位（`⟦TODO⟧ 原文`），由 `i18n:trans` 翻译；
 - **目标语言 extra**：不属于期望集合的 key → 警告，`--remove` 删除；
 - 动态调用（`t(variable)`、`` t(`x.${id}`) ``）只报告，不参与增删判断；
 - 全程无交互：CI 里缺 key 时退出码为 1。
+
+### 翻译环境（.env）
+
+`trans` 从 `playground/react/.env` 读取 OpenAI-compatible 配置（已 gitignore，模板见
+[.env.example](playground/react/.env.example)）：
+
+```bash
+I18N_LLM_BASE_URL=https://api.openai.com/v1
+I18N_LLM_API_KEY=sk-...
+I18N_LLM_MODEL=gpt-4o-mini
+```
+
+- 未翻译判定 = 目标缺 key，或值为 marker 占位；兼容「值等于源语言原文」的旧占位；
+- 自动带入 `t()` 调用处的代码片段作为上下文，`translation.hints` 可手工覆盖；
+- 一次请求批量发送 `unit[] → result[]`，串行不并发；校验 key / 占位符，失败重试；
+- 只补未翻译内容，不覆盖已有译文；结束后自动跑一次 `i18n-llm-trans check`；
+- 缺少环境变量时直接报错，不发起网络请求。
 
 配置见 [playground/react/i18n.config.json](playground/react/i18n.config.json)，完整说明见
 [CLI README](packages/i18n-llm-trans-cli/README.md)。

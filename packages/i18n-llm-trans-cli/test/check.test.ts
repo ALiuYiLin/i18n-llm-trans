@@ -116,9 +116,9 @@ describe('runCheck', () => {
     expect(result.exitCode).toBe(0)
     expect(await readMessages(dir, 'zh-CN')).toMatchObject({ 保存: '保存', 删除: '删除' })
     expect(await readMessages(dir, 'en-US')).toMatchObject({
-      保存: '保存',
-      删除: '删除',
-      删除__TRANS_ID_remove: '删除',
+      保存: '⟦TODO⟧ 保存',
+      删除: '⟦TODO⟧ 删除',
+      删除__TRANS_ID_remove: '⟦TODO⟧ 删除',
     })
 
     const targetAction = result.actions.find((action) => action.locale === 'en-US')

@@ -18,6 +18,7 @@
     "i18n:check:source": "pnpm --filter @i18n-playground/react i18n:check:source",
     "i18n:check:target": "pnpm --filter @i18n-playground/react i18n:check:target",
     "i18n:fix": "pnpm --filter @i18n-playground/react i18n:fix",
+    "i18n:trans": "pnpm --filter @i18n-playground/react i18n:trans",
     "preview:vue": "pnpm --filter @i18n-playground/vue preview",
     "preview:react": "pnpm --filter @i18n-playground/react preview"
   },

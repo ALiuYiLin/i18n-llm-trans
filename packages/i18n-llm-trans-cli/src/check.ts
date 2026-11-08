@@ -1,25 +1,19 @@
-import { glob } from 'tinyglobby'
-import { readFile } from 'node:fs/promises'
-import { join, relative } from 'node:path'
+import { join } from 'node:path'
 import { loadConfig } from './config'
+import { buildVariants, dedupeUsages, expectedTargetKeys } from './keys'
 import { listLocales, readLocaleFile, writeLocaleFile } from './locales'
-import { scanCode } from './scan'
+import { formatPlaceholder } from './placeholder'
+import { displayFile, scanProject } from './project'
 import type {
   ApplyAction,
   CheckOptions,
   CheckResult,
-  DynamicUsage,
   MissingSourceKey,
   SourceDiff,
   TargetDiff,
-  Usage,
 } from './types'
 
 const LIST_LIMIT = 20
-
-function displayFile(cwd: string, path: string): string {
-  return relative(cwd, path).replaceAll('\\', '/')
-}
 
 function printItems(items: string[]): void {
   for (const item of items.slice(0, LIST_LIMIT)) {
@@ -28,21 +22,6 @@ function printItems(items: string[]): void {
   if (items.length > LIST_LIMIT) {
     console.log(`    … 还有 ${items.length - LIST_LIMIT} 个`)
   }
-}
-
-function dedupeUsages(usages: Usage[]): Usage[] {
-  const map = new Map<string, Usage>()
-  for (const usage of usages) {
-    const existing = map.get(usage.source)
-    if (existing) {
-      for (const id of usage.transIds) {
-        if (!existing.transIds.includes(id)) existing.transIds.push(id)
-      }
-    } else {
-      map.set(usage.source, { ...usage, transIds: [...usage.transIds] })
-    }
-  }
-  return [...map.values()]
 }
 
 export async function runCheck(options: CheckOptions): Promise<CheckResult> {
@@ -60,32 +39,8 @@ export async function runCheck(options: CheckOptions): Promise<CheckResult> {
   const { config } = await loadConfig(options.cwd)
   const localesDir = join(options.cwd, config.localesDir)
 
-  const files = (
-    await glob(config.include, {
-      cwd: options.cwd,
-      ignore: config.exclude,
-      absolute: true,
-      dot: false,
-    })
-  ).sort()
-
-  if (files.length === 0) {
-    throw new Error(`No files matched include patterns: ${config.include.join(', ')}`)
-  }
-
-  const usages: Usage[] = []
-  const dynamicUsages: DynamicUsage[] = []
-  const literals = new Set<string>()
-
-  for (const file of files) {
-    const code = await readFile(file, 'utf8')
-    const result = scanCode(code, displayFile(options.cwd, file), config)
-    usages.push(...result.usages)
-    dynamicUsages.push(...result.dynamicUsages)
-    for (const literal of result.literals) literals.add(literal)
-  }
-
-  const uniqueUsages = dedupeUsages(usages)
+  const scanned = await scanProject(options.cwd, config)
+  const uniqueUsages = dedupeUsages(scanned.usages)
 
   const locales = await listLocales(localesDir)
   if (!locales.includes(config.sourceLocale)) {
@@ -117,17 +72,9 @@ export async function runCheck(options: CheckOptions): Promise<CheckResult> {
   const unusedSource =
     options.scope === 'target'
       ? []
-      : sourceKeys.filter((key) => !usedKeySet.has(key) && !literals.has(key))
+      : sourceKeys.filter((key) => !usedKeySet.has(key) && !scanned.literals.has(key))
 
-  const variantKeys = new Set<string>()
-  const variantSource = new Map<string, string>()
-  for (const usage of uniqueUsages) {
-    for (const id of usage.transIds) {
-      const key = `${usage.source}${config.transId.separator}${id}`
-      variantKeys.add(key)
-      variantSource.set(key, usage.source)
-    }
-  }
+  const variants = buildVariants(uniqueUsages, config)
 
   const actions: ApplyAction[] = []
 
@@ -168,7 +115,7 @@ export async function runCheck(options: CheckOptions): Promise<CheckResult> {
   }
 
   const finalSourceKeys = Object.keys(sourceFile.messages)
-  const expectedKeys = new Set<string>([...finalSourceKeys, ...variantKeys])
+  const expectedKeys = expectedTargetKeys(finalSourceKeys, variants)
 
   const targets: TargetDiff[] = []
   if (options.scope !== 'source') {
@@ -181,11 +128,14 @@ export async function runCheck(options: CheckOptions): Promise<CheckResult> {
       if (options.addTarget && missing.length > 0) {
         const added: string[] = []
         for (const key of missing) {
-          // Placeholder values are the source text; they still need real translation.
-          const baseKey = variantSource.get(key)
-          targetFile.messages[key] = baseKey
+          const baseKey = variants.variantSource.get(key)
+          const sourceText = baseKey
             ? (sourceFile.messages[baseKey] ?? baseKey)
             : (sourceFile.messages[key] ?? key)
+          targetFile.messages[key] = formatPlaceholder(
+            config.translation.placeholderMarker,
+            sourceText,
+          )
           added.push(key)
         }
         if (added.length > 0) {
@@ -237,9 +187,9 @@ export async function runCheck(options: CheckOptions): Promise<CheckResult> {
 
   const result: CheckResult = {
     exitCode,
-    filesScanned: files.length,
+    filesScanned: scanned.files.length,
     staticKeys: uniqueUsages.length,
-    dynamicUsages,
+    dynamicUsages: scanned.dynamicUsages,
     source,
     targets,
     actions,
@@ -335,7 +285,7 @@ function printReport(result: CheckResult, options: CheckOptions): void {
   }
   if (targetMissing && !options.addTarget) {
     console.log('')
-    console.log('hint: --add-target 用源语言原文补目标语言占位 key（之后仍需翻译）')
+    console.log('hint: --add-target 用 marker 占位补目标语言 key（之后由 i18n:trans 翻译）')
   }
   if (hasRemovable && !options.remove) {
     console.log('hint: --remove 删除未使用 / 多余的 key')

@@ -1,8 +1,19 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import type { I18nConfig } from './types'
+import type { I18nConfig, TranslationConfig } from './types'
 
 export const CONFIG_FILENAME = 'i18n.config.json'
+
+const TRANSLATION_DEFAULTS: TranslationConfig = {
+  placeholderMarker: '⟦TODO⟧',
+  batchSize: 20,
+  contextLines: 0,
+  hints: {},
+  glossary: {},
+  ignoreKeys: [],
+  maxRetries: 1,
+  jsonMode: true,
+}
 
 const DEFAULTS = {
   include: ['src/**/*.{ts,tsx}'],
@@ -38,6 +49,14 @@ export async function loadConfig(cwd: string): Promise<LoadedConfig> {
   }
 
   const transId = { ...DEFAULTS.transId, ...(parsed.transId ?? {}) }
+  const translation = { ...TRANSLATION_DEFAULTS, ...(parsed.translation ?? {}) }
+
+  if (translation.placeholderMarker.length === 0) {
+    throw new Error(`"translation.placeholderMarker" must not be empty in ${path}`)
+  }
+  if (!Number.isInteger(translation.batchSize) || translation.batchSize < 1) {
+    throw new Error(`"translation.batchSize" must be a positive integer in ${path}`)
+  }
 
   return {
     path,
@@ -49,6 +68,7 @@ export async function loadConfig(cwd: string): Promise<LoadedConfig> {
       targetLocales: parsed.targetLocales,
       callers: parsed.callers ?? [...DEFAULTS.callers],
       transId,
+      translation,
     },
   }
 }

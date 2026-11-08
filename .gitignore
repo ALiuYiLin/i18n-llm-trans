@@ -29,5 +29,11 @@ Thumbs.db
 # test / coverage
 coverage/
 
+# local env files (never commit secrets)
+.env
+.env.local
+.env.*.local
+!.env.example
+
 # local scratch
 .dsh-tmp/
