@@ -29,6 +29,8 @@ import {
  *   t('删除', { __TRANS_ID: 'delete' })  ->  { "删除__TRANS_ID_delete": "Delete" }
  *   t('删除', { __TRANS_ID: 'remove' })  ->  { "删除__TRANS_ID_remove": "Remove" }
  *
+ * 也支持简写：`t('删除', 'remove')` 等价于 `t('删除', { __TRANS_ID: 'remove' })`。
+ *
  * 标记名与分隔符都在 `./trans-id.ts` 的 `transIdConfig` 中配置，可整体换成
  * `__XXX_ID` 之类的命名；调用方式、资源键和类型都会随之变化。
  *
@@ -76,7 +78,10 @@ export type UnknownEnglishKeys = AssertNever<Exclude<keyof typeof enUS, MessageK
  */
 export type TranslateOptions = TransIdOptions & Record<string, unknown>
 
-export type Translate = (source: SourceKey, options?: TranslateOptions) => string
+export type Translate = (
+  source: SourceKey,
+  options?: TranslateOptions | TransId,
+) => string
 
 export function isSupportedLocale(value: string): value is AppLocale {
   return (SUPPORTED_LOCALES as readonly string[]).includes(value)
@@ -160,11 +165,17 @@ function translateWith(
   locale: AppLocale,
   baseT: RawTranslate,
   source: SourceKey,
-  options: TranslateOptions = {},
+  options: TranslateOptions | TransId = {},
 ): string {
+  // `t(source, 'remove')` is shorthand for `t(source, { __TRANS_ID: 'remove' })`.
+  const normalized: TranslateOptions =
+    typeof options === 'object'
+      ? options
+      : ({ [transIdConfig.option]: options } as TranslateOptions)
+
   // The marker name comes from `transIdConfig`, so `__TRANS_ID` can be
   // reconfigured to `__XXX_ID` (or anything else) in one place.
-  const { [transIdConfig.option]: rawTransId, ...params } = options as Record<string, unknown>
+  const { [transIdConfig.option]: rawTransId, ...params } = normalized as Record<string, unknown>
   const transId = rawTransId as TransId | undefined
   const needsTranslation = transId !== undefined && locale !== SOURCE_LOCALE
   const lookupKey = needsTranslation
@@ -186,7 +197,10 @@ function translateWith(
 }
 
 /** Translate a Chinese source string outside of a component. */
-export function translate(source: SourceKey, options?: TranslateOptions): string {
+export function translate(
+  source: SourceKey,
+  options?: TranslateOptions | TransId,
+): string {
   return translateWith(currentLocale(), rawTranslate, source, options)
 }
 

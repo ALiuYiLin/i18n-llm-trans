@@ -103,12 +103,14 @@ React 应用采用「中文原文即 key」的方案：
 const { t } = useI18n()
 
 t('删除', { __TRANS_ID: 'delete' }) // → en-US.json: { "删除__TRANS_ID_delete": "Delete" }
-t('删除', { __TRANS_ID: 'remove' }) // → en-US.json: { "删除__TRANS_ID_remove": "Remove" }
+t('删除', 'remove') // 简写，等价于 { __TRANS_ID: 'remove' } → "Remove"
 ```
 
 规则与约束：
 
 - 实际查找的键是 `<中文原文>__TRANS_ID_<id>`，`id` 可以是字符串或数字。
+- 第二个参数支持简写：`t('删除', 'remove')` 等价于 `t('删除', { __TRANS_ID: 'remove' })`，
+  且不依赖标记名配置（改成 `__XXX_ID` 后依然可用）。
 - 目标语言缺少该变体时，回退到基础文案的译文；再缺失则回退到中文源文案。
 - `zh-CN` 是源语言，始终直接展示中文原文，不会查找带 `__TRANS_ID` 的键。
 - 组件内必须使用 `useI18n()` 返回的 `t`（而非 `useTranslation()`），`__TRANS_ID` 才会生效。

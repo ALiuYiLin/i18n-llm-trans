@@ -102,7 +102,7 @@ export default function App() {
           <div className="demo-actions">
             <div className="demo-item">
               <button type="button" className="demo-button">
-                {t('删除', { __TRANS_ID: 'delete' })}
+                {t('删除', 'delete')}
               </button>
               <p className="demo-caption">
                 {t('永久销毁且不可恢复：删除用户、数据库记录或备份。')}
