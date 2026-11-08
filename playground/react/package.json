@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@10coding/i18n-llm-trans-react": "workspace:*",
     "i18next": "^27.0.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
