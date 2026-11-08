@@ -4,6 +4,12 @@ import { initReactI18next, useTranslation } from 'react-i18next'
 import { FRAMEWORK_LABEL } from '../app-config'
 import enUS from '../locales/en-US.json'
 import zhCN from '../locales/zh-CN.json'
+import {
+  transIdConfig,
+  type TransId,
+  type TransIdOptions,
+  type TransIdSeparator,
+} from './trans-id'
 
 /**
  * 约定：中文键 / 中文值（Chinese-as-key）
@@ -23,6 +29,9 @@ import zhCN from '../locales/zh-CN.json'
  *   t('删除', { __TRANS_ID: 'delete' })  ->  { "删除__TRANS_ID_delete": "Delete" }
  *   t('删除', { __TRANS_ID: 'remove' })  ->  { "删除__TRANS_ID_remove": "Remove" }
  *
+ * 标记名与分隔符都在 `./trans-id.ts` 的 `transIdConfig` 中配置，可整体换成
+ * `__XXX_ID` 之类的命名；调用方式、资源键和类型都会随之变化。
+ *
  * 目标语言缺少 `<原文>__TRANS_ID_<id>` 时回退到基础中文文案；源语言（zh-CN）
  * 始终直接展示中文原文，不会查找带 `__TRANS_ID` 的键。
  */
@@ -30,6 +39,7 @@ import zhCN from '../locales/zh-CN.json'
 export const SUPPORTED_LOCALES = ['zh-CN', 'en-US'] as const
 export type AppLocale = (typeof SUPPORTED_LOCALES)[number]
 export type LocaleDetectionSource = 'storage' | 'browser' | 'default'
+
 
 /** Chinese source text is the canonical locale. */
 export const SOURCE_LOCALE: AppLocale = 'zh-CN'
@@ -46,21 +56,25 @@ export const LOCALE_LABELS: Record<AppLocale, string> = {
 
 /** Every key in `zh-CN.json` is a translatable Chinese source string. */
 export type SourceKey = keyof typeof zhCN
-export type TransId = string | number
-export type MessageKey = SourceKey | `${SourceKey}__TRANS_ID_${string}`
+export type MessageKey = SourceKey | `${SourceKey}${TransIdSeparator}${string}`
+
+export { transIdConfig }
+export type { TransId }
 
 /**
  * Compile-time guard: if `en-US.json` contains a key that is neither a Chinese
- * source key nor a `__TRANS_ID` variant of one, this type resolves to that key
- * and TypeScript reports "does not satisfy the constraint 'never'".
+ * source key nor a configured `<source><separator><id>` variant of one, this
+ * type resolves to that key and TypeScript reports
+ * "does not satisfy the constraint 'never'".
  */
 type AssertNever<T extends never> = T
 export type UnknownEnglishKeys = AssertNever<Exclude<keyof typeof enUS, MessageKey>>
 
-export interface TranslateOptions {
-  __TRANS_ID?: TransId
-  [param: string]: unknown
-}
+/**
+ * `t()` 的第二个参数：既支持配置的一词多译标记（如 `__TRANS_ID`），
+ * 也支持 `{name}` 等插值参数。
+ */
+export type TranslateOptions = TransIdOptions & Record<string, unknown>
 
 export type Translate = (source: SourceKey, options?: TranslateOptions) => string
 
@@ -148,9 +162,14 @@ function translateWith(
   source: SourceKey,
   options: TranslateOptions = {},
 ): string {
-  const { __TRANS_ID: transId, ...params } = options
+  // The marker name comes from `transIdConfig`, so `__TRANS_ID` can be
+  // reconfigured to `__XXX_ID` (or anything else) in one place.
+  const { [transIdConfig.option]: rawTransId, ...params } = options as Record<string, unknown>
+  const transId = rawTransId as TransId | undefined
   const needsTranslation = transId !== undefined && locale !== SOURCE_LOCALE
-  const lookupKey = needsTranslation ? `${source}__TRANS_ID_${transId}` : source
+  const lookupKey = needsTranslation
+    ? `${source}${transIdConfig.separator}${transId}`
+    : source
   const result = baseT(lookupKey, params)
 
   if (typeof result !== 'string') {

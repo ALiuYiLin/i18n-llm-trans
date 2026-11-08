@@ -121,6 +121,34 @@ t('删除', { __TRANS_ID: 'remove' }) // → en-US.json: { "删除__TRANS_ID_rem
 
 ![React 英文界面中的 delete / remove](docs/react-delete-remove-en.png)
 
+#### 自定义标记名
+
+标记名与资源键分隔符集中在 [trans-id.ts](playground/react/src/i18n/trans-id.ts)，只改这一处即可
+把 `__TRANS_ID` 换成 `__XXX_ID` 等任意命名：
+
+```ts
+export const transIdConfig = {
+  option: '__TRANS_ID', // t() 的选项名
+  separator: '__TRANS_ID_', // 资源键分隔符
+} as const
+```
+
+例如改成 `__XXX_ID`：
+
+```ts
+export const transIdConfig = {
+  option: '__XXX_ID',
+  separator: '__XXX_ID_',
+} as const
+```
+
+```ts
+t('删除', { __XXX_ID: 'delete' }) // → en-US.json: { "删除__XXX_ID_delete": "Delete" }
+```
+
+`TranslateOptions`、`MessageKey` 的编译期校验都从该配置推导：改完配置后，若资源键
+（`删除__XXX_ID_delete`）或调用方式没同步，TypeScript 会直接报错。
+
 ### 新增一种语言
 
 以 `ja-JP` 为例，两个应用各做同样的改动：
