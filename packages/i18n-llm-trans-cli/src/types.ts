@@ -73,7 +73,10 @@ export type CheckScope = 'all' | 'source' | 'target'
 export interface CheckOptions {
   cwd: string
   scope: CheckScope
+  /** Add missing keys to the source locale (identity values). */
   add: boolean
+  /** Add missing keys to target locales, using the source text as a placeholder value. */
+  addTarget: boolean
   remove: boolean
   /** Skip console output (used by tests). */
   quiet?: boolean

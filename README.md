@@ -80,7 +80,7 @@ pnpm i18n:check   # 静态扫描 t()，检查语言 JSON（源语言 + 目标语
 | `pnpm i18n:check`     | 检查源语言 + 目标语言（缺 key 时退出码 1）          |
 | `pnpm i18n:check:source` | 只检查源语言                                    |
 | `pnpm i18n:check:target` | 只检查目标语言                                  |
-| `pnpm i18n:fix`       | 补源语言缺 key、删除未使用 / 多余 key               |
+| `pnpm i18n:fix`       | 补源语言 key、补目标语言占位 key、删除未使用 / 多余 key |
 | `pnpm test`           | 运行包与 CLI 的单元测试（vitest）                   |
 | `pnpm typecheck`      | 先构建包，再递归执行类型检查                        |
 | `pnpm preview:vue`    | 预览 Vue 应用的生产构建                             |
@@ -133,7 +133,7 @@ pnpm i18n:check          # 源语言 + 目标语言
 pnpm i18n:check:source   # 只检查源语言
 pnpm i18n:check:target   # 只检查目标语言
 
-pnpm i18n:fix            # 等价于 check --add --remove
+pnpm i18n:fix            # 等价于 check --add --add-target --remove
 ```
 
 规则：
@@ -142,7 +142,7 @@ pnpm i18n:fix            # 等价于 check --add --remove
 - **源语言 unused**：JSON 有、但代码里既没有静态 `t()` 调用、也没有以字符串字面量出现 →
   只警告，`--remove` 才删除（字面量出现视为间接使用，避免误删动态 key）；
 - **目标语言 missing**：期望 key（源语言全部 key + 代码中的 `__TRANS_ID` 变体）缺少译文 →
-  只报告，不自动创建空值；
+  默认只报告；`--add-target` 用源语言原文写入占位值，之后仍需人工 / LLM 翻译；
 - **目标语言 extra**：不属于期望集合的 key → 警告，`--remove` 删除；
 - 动态调用（`t(variable)`、`` t(`x.${id}`) ``）只报告，不参与增删判断；
 - 全程无交互：CI 里缺 key 时退出码为 1。

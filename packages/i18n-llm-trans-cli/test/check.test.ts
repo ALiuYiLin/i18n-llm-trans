@@ -49,8 +49,19 @@ function readMessages(dir: string, locale: string): Promise<Record<string, strin
   )
 }
 
-function run(dir: string, overrides: Partial<{ add: boolean; remove: boolean; scope: CheckScope }> = {}) {
-  return runCheck({ cwd: dir, scope: 'all', add: false, remove: false, quiet: true, ...overrides })
+function run(
+  dir: string,
+  overrides: Partial<{ add: boolean; addTarget: boolean; remove: boolean; scope: CheckScope }> = {},
+) {
+  return runCheck({
+    cwd: dir,
+    scope: 'all',
+    add: false,
+    addTarget: false,
+    remove: false,
+    quiet: true,
+    ...overrides,
+  })
 }
 
 afterEach(async () => {
@@ -89,6 +100,31 @@ describe('runCheck', () => {
     expect(await readMessages(dir, 'zh-CN')).toEqual({ 你好: '你好', 删除: '删除' })
     // The target locale can only be fixed by translating, so the check still fails.
     expect(result.exitCode).toBe(1)
+  })
+
+  it('--add-target fills missing target keys with source text placeholders', async () => {
+    const dir = await createProject(
+      projectFiles({
+        source: { 你好: '你好' },
+        target: { 你好: 'Hello' },
+        code: `export const a = t('你好'); export const b = t('保存'); export const c = t('删除', 'remove')`,
+      }),
+    )
+
+    const result = await run(dir, { add: true, addTarget: true })
+
+    expect(result.exitCode).toBe(0)
+    expect(await readMessages(dir, 'zh-CN')).toMatchObject({ 保存: '保存', 删除: '删除' })
+    expect(await readMessages(dir, 'en-US')).toMatchObject({
+      保存: '保存',
+      删除: '删除',
+      删除__TRANS_ID_remove: '删除',
+    })
+
+    const targetAction = result.actions.find((action) => action.locale === 'en-US')
+    expect(targetAction?.added.sort()).toEqual(
+      ['删除', '删除__TRANS_ID_remove', '保存'].sort(),
+    )
   })
 
   it('--remove drops unused source keys and extra target keys', async () => {
@@ -149,5 +185,17 @@ describe('runCheck', () => {
     )
 
     await expect(run(dir, { scope: 'target', add: true })).rejects.toThrow(/--add/)
+  })
+
+  it('rejects --add-target together with --source', async () => {
+    const dir = await createProject(
+      projectFiles({
+        source: { 你好: '你好' },
+        target: { 你好: 'Hello' },
+        code: `export const a = t('你好')`,
+      }),
+    )
+
+    await expect(run(dir, { scope: 'source', addTarget: true })).rejects.toThrow(/--add-target/)
   })
 })

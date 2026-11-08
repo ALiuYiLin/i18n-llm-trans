@@ -49,7 +49,12 @@ export async function runCheck(options: CheckOptions): Promise<CheckResult> {
   const quiet = options.quiet ?? false
 
   if (options.add && options.scope === 'target') {
-    throw new Error('--add is only supported for the source locale; target locales need translation')
+    throw new Error(
+      '--add is only supported for the source locale; use --add-target for target placeholder entries',
+    )
+  }
+  if (options.addTarget && options.scope === 'source') {
+    throw new Error('--add-target only applies to target locales')
   }
 
   const { config } = await loadConfig(options.cwd)
@@ -115,9 +120,12 @@ export async function runCheck(options: CheckOptions): Promise<CheckResult> {
       : sourceKeys.filter((key) => !usedKeySet.has(key) && !literals.has(key))
 
   const variantKeys = new Set<string>()
+  const variantSource = new Map<string, string>()
   for (const usage of uniqueUsages) {
     for (const id of usage.transIds) {
-      variantKeys.add(`${usage.source}${config.transId.separator}${id}`)
+      const key = `${usage.source}${config.transId.separator}${id}`
+      variantKeys.add(key)
+      variantSource.set(key, usage.source)
     }
   }
 
@@ -170,6 +178,27 @@ export async function runCheck(options: CheckOptions): Promise<CheckResult> {
       const missing = [...expectedKeys].filter((key) => !targetKeys.has(key))
       const extra = [...targetKeys].filter((key) => !expectedKeys.has(key))
 
+      if (options.addTarget && missing.length > 0) {
+        const added: string[] = []
+        for (const key of missing) {
+          // Placeholder values are the source text; they still need real translation.
+          const baseKey = variantSource.get(key)
+          targetFile.messages[key] = baseKey
+            ? (sourceFile.messages[baseKey] ?? baseKey)
+            : (sourceFile.messages[key] ?? key)
+          added.push(key)
+        }
+        if (added.length > 0) {
+          await writeLocaleFile(targetFile)
+          actions.push({
+            file: displayFile(options.cwd, targetFile.path),
+            locale,
+            added,
+            removed: [],
+          })
+        }
+      }
+
       if (options.remove && extra.length > 0) {
         for (const key of extra) delete targetFile.messages[key]
         await writeLocaleFile(targetFile)
@@ -191,8 +220,10 @@ export async function runCheck(options: CheckOptions): Promise<CheckResult> {
   }
 
   const stayingMissingSource = options.add && options.scope !== 'target' ? [] : missingSource
-  const missingTargetCount = targets.reduce((total, target) => total + target.missing.length, 0)
-  const exitCode = stayingMissingSource.length > 0 || missingTargetCount > 0 ? 1 : 0
+  const stayingMissingTarget = options.addTarget
+    ? 0
+    : targets.reduce((total, target) => total + target.missing.length, 0)
+  const exitCode = stayingMissingSource.length > 0 || stayingMissingTarget > 0 ? 1 : 0
 
   const source: SourceDiff | undefined =
     options.scope === 'target'
@@ -293,14 +324,18 @@ function printReport(result: CheckResult, options: CheckOptions): void {
     }
   }
 
-  const hasMissing =
-    (result.source?.missing.length ?? 0) > 0 || result.targets.some((target) => target.missing.length > 0)
+  const sourceMissing = (result.source?.missing.length ?? 0) > 0
+  const targetMissing = result.targets.some((target) => target.missing.length > 0)
   const hasRemovable =
     (result.source?.unused.length ?? 0) > 0 || result.targets.some((target) => target.extra.length > 0)
 
-  if (hasMissing && !options.add && !options.remove) {
+  if (sourceMissing && !options.add) {
     console.log('')
-    console.log('hint: --add 补源语言 key；目标语言缺译文需要翻译，不会自动创建')
+    console.log('hint: --add 补源语言 key（identity 值）')
+  }
+  if (targetMissing && !options.addTarget) {
+    console.log('')
+    console.log('hint: --add-target 用源语言原文补目标语言占位 key（之后仍需翻译）')
   }
   if (hasRemovable && !options.remove) {
     console.log('hint: --remove 删除未使用 / 多余的 key')

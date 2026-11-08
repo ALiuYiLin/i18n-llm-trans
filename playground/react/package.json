@@ -11,7 +11,7 @@
     "i18n:check": "pnpm --filter @10coding/i18n-llm-trans-cli build && i18n-llm-trans check",
     "i18n:check:source": "pnpm --filter @10coding/i18n-llm-trans-cli build && i18n-llm-trans check --source",
     "i18n:check:target": "pnpm --filter @10coding/i18n-llm-trans-cli build && i18n-llm-trans check --target",
-    "i18n:fix": "pnpm --filter @10coding/i18n-llm-trans-cli build && i18n-llm-trans check --add --remove"
+    "i18n:fix": "pnpm --filter @10coding/i18n-llm-trans-cli build && i18n-llm-trans check --add --add-target --remove"
   },
   "dependencies": {
     "@10coding/i18n-llm-trans-react": "workspace:*",
