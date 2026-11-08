@@ -25,9 +25,10 @@
   "数字": "Number",
   "一词多译": "One source, multiple translations",
   "同一个中文词在不同场景下可以对应不同的英文，通过 __TRANS_ID 区分。": "The same Chinese word can map to different English strings via __TRANS_ID.",
-  "确定": "Confirm",
-  "确定__TRANS_ID_action": "Confirm",
-  "确定__TRANS_ID_ack": "OK",
+  "删除__TRANS_ID_delete": "Delete",
+  "删除__TRANS_ID_remove": "Remove",
+  "永久销毁且不可恢复：删除用户、数据库记录或备份。": "Permanent and irreversible: deleting a user, a database record or a backup.",
+  "仅解除关联，对象仍然存在：把用户移出角色组、从仪表盘移除卡片。": "Only the association is removed while the object remains: removing a user from a role group or a card from a dashboard.",
   "语言偏好存储键：{key}": "Language preference key: {key}",
   "已支持语言：{locales}": "Supported locales: {locales}"
 }

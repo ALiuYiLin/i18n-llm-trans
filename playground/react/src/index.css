@@ -256,9 +256,25 @@ body {
 }
 
 .demo-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  align-items: start;
+}
+
+.demo-item {
+  padding: 18px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.demo-caption {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-muted);
 }
 
 .demo-button {

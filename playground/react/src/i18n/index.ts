@@ -17,10 +17,11 @@ import zhCN from '../locales/zh-CN.json'
  *   { "你好": "hello" }
  *
  * 同一个中文原文在不同场景需要不同译文时，调用时传入 `__TRANS_ID`，
- * 实际查找的键会变成 `<中文原文>__TRANS_ID_<id>`：
+ * 实际查找的键会变成 `<中文原文>__TRANS_ID_<id>`。例如中文都叫「删除」，
+ * 英文却要区分永久销毁的 delete 与仅解除关联的 remove：
  *
- *   t('确认', { __TRANS_ID: '1' })  ->  { "确认__TRANS_ID_1": "ok" }
- *   t('确认', { __TRANS_ID: '2' })  ->  { "确认__TRANS_ID_2": "yes" }
+ *   t('删除', { __TRANS_ID: 'delete' })  ->  { "删除__TRANS_ID_delete": "Delete" }
+ *   t('删除', { __TRANS_ID: 'remove' })  ->  { "删除__TRANS_ID_remove": "Remove" }
  *
  * 目标语言缺少 `<原文>__TRANS_ID_<id>` 时回退到基础中文文案；源语言（zh-CN）
  * 始终直接展示中文原文，不会查找带 `__TRANS_ID` 的键。

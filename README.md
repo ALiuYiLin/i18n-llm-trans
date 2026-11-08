@@ -96,13 +96,14 @@ React 应用采用「中文原文即 key」的方案：
 { "你好": "hello" }
 ```
 
-同一个中文原文在不同场景需要不同译文时，调用时传入 `__TRANS_ID`：
+同一个中文原文在不同场景需要不同译文时，调用时传入 `__TRANS_ID`。例如中文都叫「删除」，
+英文却必须区分永久销毁的 delete 与仅解除关联的 remove——后台按钮混用会直接误导用户：
 
 ```ts
 const { t } = useI18n()
 
-t('确认', { __TRANS_ID: '1' }) // → en-US.json: { "确认__TRANS_ID_1": "ok" }
-t('确认', { __TRANS_ID: '2' }) // → en-US.json: { "确认__TRANS_ID_2": "yes" }
+t('删除', { __TRANS_ID: 'delete' }) // → en-US.json: { "删除__TRANS_ID_delete": "Delete" }
+t('删除', { __TRANS_ID: 'remove' }) // → en-US.json: { "删除__TRANS_ID_remove": "Remove" }
 ```
 
 规则与约束：
@@ -114,7 +115,11 @@ t('确认', { __TRANS_ID: '2' }) // → en-US.json: { "确认__TRANS_ID_2": "yes
 - `t()` 的入参在编译期被约束为 `zh-CN.json` 中存在的键；`en-US.json` 中若出现不属于
   中文键、也不符合 `<中文键>__TRANS_ID_<id>` 格式的键，同样会直接类型报错。
 - React 页面底部的「一词多译」区块就是 `__TRANS_ID` 的实时演示：
-  中文下两个按钮都显示「确定」，英文下分别显示 `Confirm` / `OK`。
+  中文下两个按钮都显示「删除」，英文下分别显示 `Delete` / `Remove`，并各自附上语义说明。
+
+英文界面中同一区块的渲染效果：
+
+![React 英文界面中的 delete / remove](docs/react-delete-remove-en.png)
 
 ### 新增一种语言
 

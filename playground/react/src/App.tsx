@@ -100,12 +100,22 @@ export default function App() {
             {t('同一个中文词在不同场景下可以对应不同的英文，通过 __TRANS_ID 区分。')}
           </p>
           <div className="demo-actions">
-            <button type="button" className="demo-button">
-              {t('确定', { __TRANS_ID: 'action' })}
-            </button>
-            <button type="button" className="demo-button">
-              {t('确定', { __TRANS_ID: 'ack' })}
-            </button>
+            <div className="demo-item">
+              <button type="button" className="demo-button">
+                {t('删除', { __TRANS_ID: 'delete' })}
+              </button>
+              <p className="demo-caption">
+                {t('永久销毁且不可恢复：删除用户、数据库记录或备份。')}
+              </p>
+            </div>
+            <div className="demo-item">
+              <button type="button" className="demo-button">
+                {t('删除', { __TRANS_ID: 'remove' })}
+              </button>
+              <p className="demo-caption">
+                {t('仅解除关联，对象仍然存在：把用户移出角色组、从仪表盘移除卡片。')}
+              </p>
+            </div>
           </div>
         </section>
       </main>
