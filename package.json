@@ -1,0 +1,20 @@
+{
+  "name": "i18n-llm-trans",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Vite + TypeScript monorepo playground with multilingual Vue and React apps.",
+  "scripts": {
+    "dev:vue": "pnpm --filter @i18n-playground/vue dev",
+    "dev:react": "pnpm --filter @i18n-playground/react dev",
+    "build": "pnpm -r build",
+    "build:vue": "pnpm --filter @i18n-playground/vue build",
+    "build:react": "pnpm --filter @i18n-playground/react build",
+    "typecheck": "pnpm -r typecheck",
+    "preview:vue": "pnpm --filter @i18n-playground/vue preview",
+    "preview:react": "pnpm --filter @i18n-playground/react preview"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}

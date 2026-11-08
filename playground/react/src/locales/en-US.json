@@ -1,0 +1,54 @@
+{
+  "app": {
+    "title": "i18n Playground",
+    "framework": "React 19",
+    "stack": "React 19 · Vite · TypeScript · react-i18next",
+    "tagline": "One interface, translated at runtime."
+  },
+  "languageSwitcher": {
+    "label": "Language"
+  },
+  "hero": {
+    "name": "friend",
+    "greeting": "Hello, {name}!",
+    "description": "This page is built with {framework}. Switch the language below and every label updates instantly — no page reload required."
+  },
+  "status": {
+    "currentLocale": "Current locale",
+    "fallbackLocale": "Fallback locale",
+    "detectionSource": "Initial detection"
+  },
+  "sources": {
+    "storage": "saved preference",
+    "browser": "browser language",
+    "default": "default fallback"
+  },
+  "features": {
+    "title": "Included in this playground",
+    "localeFiles": {
+      "title": "Locale files",
+      "description": "Translations live in src/locales/*.json and are bundled by Vite at build time."
+    },
+    "detection": {
+      "title": "Automatic detection",
+      "description": "The first visit follows your browser language and falls back to en-US."
+    },
+    "switcher": {
+      "title": "Live switching",
+      "description": "The switcher updates the UI, the <html lang> attribute and the document title."
+    },
+    "persistence": {
+      "title": "Remembered choice",
+      "description": "Your selection is stored in localStorage and restored on the next visit."
+    }
+  },
+  "formats": {
+    "title": "Locale-aware formatting",
+    "dateTime": "Date & time",
+    "number": "Number"
+  },
+  "footer": {
+    "note": "Language preference key: {key}",
+    "supported": "Supported locales: {locales}"
+  }
+}

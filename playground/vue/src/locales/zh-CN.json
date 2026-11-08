@@ -1,0 +1,54 @@
+{
+  "app": {
+    "title": "i18n 演练场",
+    "framework": "Vue 3",
+    "stack": "Vue 3 · Vite · TypeScript · vue-i18n",
+    "tagline": "同一套界面，运行时切换语言。"
+  },
+  "languageSwitcher": {
+    "label": "语言"
+  },
+  "hero": {
+    "name": "朋友",
+    "greeting": "你好，{name}！",
+    "description": "本页面使用 {framework} 构建。在下方切换语言，所有文案会立即更新，无需刷新页面。"
+  },
+  "status": {
+    "currentLocale": "当前语言",
+    "fallbackLocale": "回退语言",
+    "detectionSource": "初始识别来源"
+  },
+  "sources": {
+    "storage": "本地保存的偏好",
+    "browser": "浏览器语言",
+    "default": "默认回退"
+  },
+  "features": {
+    "title": "本演练场包含",
+    "localeFiles": {
+      "title": "语言资源文件",
+      "description": "翻译存放在 src/locales/*.json 中，由 Vite 在构建时打包。"
+    },
+    "detection": {
+      "title": "自动识别语言",
+      "description": "首次访问时跟随浏览器语言，无法识别时回退到 en-US。"
+    },
+    "switcher": {
+      "title": "即时切换",
+      "description": "切换语言会同时更新界面、<html lang> 属性和页面标题。"
+    },
+    "persistence": {
+      "title": "记住选择",
+      "description": "你的选择会写入 localStorage，下次访问时自动恢复。"
+    }
+  },
+  "formats": {
+    "title": "本地化格式",
+    "dateTime": "日期与时间",
+    "number": "数字"
+  },
+  "footer": {
+    "note": "语言偏好存储键：{key}",
+    "supported": "已支持语言：{locales}"
+  }
+}

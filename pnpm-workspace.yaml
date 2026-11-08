@@ -1,0 +1,4 @@
+packages:
+  - 'playground/*'
+minimumReleaseAgeExclude:
+  - i18next@27.0.1
