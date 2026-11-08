@@ -41,6 +41,7 @@ export default function App() {
           <div className="brand__text">
             <h1>{t('i18n 演练场')}</h1>
             <p>{STACK_LABEL}</p>
+            <p>{t("你好")}</p>
           </div>
         </div>
         <LanguageSwitcher />

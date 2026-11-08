@@ -16,12 +16,17 @@ i18n-llm-trans/
 ├─ package.json                  # workspace 根：统一脚本入口
 ├─ pnpm-workspace.yaml           # workspace 声明：playground/*、packages/*
 ├─ packages/
-│  └─ i18n-llm-trans-react/      # @10coding/i18n-llm-trans-react
-│     ├─ src/core/               # 检测、中文键解析、__TRANS_ID、回退（无框架依赖）
-│     ├─ src/react/              # useI18n Hook
-│     ├─ src/createI18nRuntime.ts
-│     ├─ test/                   # vitest 单元测试
-│     └─ dist/                   # ESM + CJS + d.ts（构建产物）
+│  ├─ i18n-llm-trans-react/      # @10coding/i18n-llm-trans-react
+│  │  ├─ src/core/               # 检测、中文键解析、__TRANS_ID、回退（无框架依赖）
+│  │  ├─ src/react/              # useI18n Hook
+│  │  ├─ src/createI18nRuntime.ts
+│  │  ├─ test/                   # vitest 单元测试
+│  │  └─ dist/                   # ESM + CJS + d.ts（构建产物）
+│  └─ i18n-llm-trans-cli/        # @10coding/i18n-llm-trans-cli
+│     ├─ src/scan.ts             # Babel 扫描 t() 调用
+│     ├─ src/check.ts            # 语言 JSON 对比 / 增删
+│     ├─ test/                   # vitest 测试
+│     └─ dist/                   # CLI 构建产物
 ├─ playground/
 │  ├─ vue/                       # Vue 3 + Vite + TS + vue-i18n
 │  │  ├─ src/locales/            # en-US.json / zh-CN.json（语义化 key）
@@ -31,6 +36,7 @@ i18n-llm-trans/
 │     ├─ src/locales/            # en-US.json / zh-CN.json（中文键 / 中文值）
 │     ├─ src/i18n/               # 薄适配层：注入资源、标题模板、存储 key
 │     ├─ src/app-config.ts       # 各语言一致的静态标识
+│     ├─ i18n.config.json        # i18n:check 配置
 │     └─ src/components/LanguageSwitcher.tsx
 ├─ docs/                         # 界面截图
 └─ README.md
@@ -48,6 +54,8 @@ pnpm dev:react    # http://localhost:5174
 pnpm dev:vue      # http://localhost:5173
 
 pnpm build        # 递归构建：包 → 两个应用
+
+pnpm i18n:check   # 静态扫描 t()，检查语言 JSON（源语言 + 目标语言）
 ```
 
 ## 预览
@@ -66,15 +74,21 @@ pnpm build        # 递归构建：包 → 两个应用
 | `pnpm dev:react`      | 先构建 i18n 包，再启动 React playground（5174）     |
 | `pnpm build`          | 递归构建全部项目（包 → Vue → React）                |
 | `pnpm build:package`  | 仅构建 `@10coding/i18n-llm-trans-react`             |
+| `pnpm build:cli`      | 仅构建 `@10coding/i18n-llm-trans-cli`               |
 | `pnpm build:vue`      | 仅构建 Vue 应用                                     |
 | `pnpm build:react`    | 构建 i18n 包后再构建 React 应用                     |
-| `pnpm test`           | 运行包的单元测试（vitest）                          |
+| `pnpm i18n:check`     | 检查源语言 + 目标语言（缺 key 时退出码 1）          |
+| `pnpm i18n:check:source` | 只检查源语言                                    |
+| `pnpm i18n:check:target` | 只检查目标语言                                  |
+| `pnpm i18n:fix`       | 补源语言缺 key、删除未使用 / 多余 key               |
+| `pnpm test`           | 运行包与 CLI 的单元测试（vitest）                   |
 | `pnpm typecheck`      | 先构建包，再递归执行类型检查                        |
 | `pnpm preview:vue`    | 预览 Vue 应用的生产构建                             |
 | `pnpm preview:react`  | 预览 React 应用的生产构建                           |
 
 > React 应用通过 `workspace:*` 引用本地包，`pnpm dev:react` / `pnpm build:react` /
 > `pnpm typecheck` 都会先构建包产出 `dist`（类型声明与 ESM/CJS 产物）。
+> `i18n:check*` 脚本会先构建 CLI 包，再执行检查。
 
 ## 可复用包：`@10coding/i18n-llm-trans-react`
 
@@ -108,6 +122,33 @@ export const { i18nReady, useI18n, translate, setLocale, applyDocumentMetadata }
 - 同时产出 ESM 与 CJS，可直接发布 npm。
 
 完整 API、配置项与回退规则见 [包 README](packages/i18n-llm-trans-react/README.md)。
+
+## CLI：`i18n:check`
+
+`packages/i18n-llm-trans-cli` 用 Babel 静态扫描 `t()` 调用，与语言 JSON 对比。扫描逻辑与框架无关
+（React 先行，换 `callers` 即可适配其他写法）：
+
+```bash
+pnpm i18n:check          # 源语言 + 目标语言
+pnpm i18n:check:source   # 只检查源语言
+pnpm i18n:check:target   # 只检查目标语言
+
+pnpm i18n:fix            # 等价于 check --add --remove
+```
+
+规则：
+
+- **源语言 missing**：代码里静态 `t('...')` 用到、但 JSON 没有 → `--add` 以 `"key": "key"` 追加；
+- **源语言 unused**：JSON 有、但代码里既没有静态 `t()` 调用、也没有以字符串字面量出现 →
+  只警告，`--remove` 才删除（字面量出现视为间接使用，避免误删动态 key）；
+- **目标语言 missing**：期望 key（源语言全部 key + 代码中的 `__TRANS_ID` 变体）缺少译文 →
+  只报告，不自动创建空值；
+- **目标语言 extra**：不属于期望集合的 key → 警告，`--remove` 删除；
+- 动态调用（`t(variable)`、`` t(`x.${id}`) ``）只报告，不参与增删判断；
+- 全程无交互：CI 里缺 key 时退出码为 1。
+
+配置见 [playground/react/i18n.config.json](playground/react/i18n.config.json)，完整说明见
+[CLI README](packages/i18n-llm-trans-cli/README.md)。
 
 ## 多语言能力
 

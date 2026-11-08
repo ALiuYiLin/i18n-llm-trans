@@ -1,0 +1,12 @@
+{
+  "include": ["src/**/*.{ts,tsx}"],
+  "exclude": ["src/**/*.test.{ts,tsx}", "src/**/*.d.ts"],
+  "localesDir": "src/locales",
+  "sourceLocale": "zh-CN",
+  "targetLocales": ["en-US"],
+  "callers": ["t", "translate"],
+  "transId": {
+    "option": "__TRANS_ID",
+    "separator": "__TRANS_ID_"
+  }
+}

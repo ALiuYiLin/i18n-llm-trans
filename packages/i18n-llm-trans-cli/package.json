@@ -1,0 +1,36 @@
+{
+  "name": "@10coding/i18n-llm-trans-cli",
+  "version": "0.1.0",
+  "description": "CLI that scans t() calls with Babel and keeps source-text-key locale files complete.",
+  "type": "module",
+  "license": "MIT",
+  "files": [
+    "bin.js",
+    "dist"
+  ],
+  "bin": {
+    "i18n-llm-trans": "./bin.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm build"
+  },
+  "dependencies": {
+    "@babel/parser": "^8.1.0",
+    "tinyglobby": "^0.2.17"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "tsup": "^9.0.0",
+    "typescript": "~5.9.3",
+    "vitest": "^5.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}
