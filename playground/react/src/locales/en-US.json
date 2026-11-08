@@ -33,5 +33,5 @@
   "仅解除关联，对象仍然存在：把用户移出角色组、从仪表盘移除卡片。": "Only the association is removed while the object remains: removing a user from a role group or a card from a dashboard.",
   "语言偏好存储键：{key}": "Language preference key: {key}",
   "已支持语言：{locales}": "Supported locales: {locales}",
-  "你好啊哈": "你好啊哈"
+  "你好啊哈": "Hello there"
 }
