@@ -1,8 +1,13 @@
 # i18n-llm-trans
 
 基于 **pnpm workspace + Vite + TypeScript** 的前端多语言演练仓库，`playground/` 下包含
-**Vue** 与 **React** 两个独立应用，二者使用完全相同的界面结构、语言资源键名与语言切换行为，
-便于对比两套 i18n 方案，也便于后续接入 LLM 批量翻译语言包。
+**Vue** 与 **React** 两个独立应用。两者界面与语言切换行为一致，但语言资源约定不同：
+
+- **Vue**：`vue-i18n`，使用语义化 key（如 `features.localeFiles.title`）。
+- **React**：`react-i18next`，使用**中文键 / 中文值**（中文原文就是 key），并通过
+  `__TRANS_ID` 支持「一词多译」。
+
+便于对比两种维护方式，也便于后续接入 LLM 批量翻译语言包。
 
 ## 目录结构
 
@@ -12,12 +17,13 @@ i18n-llm-trans/
 ├─ pnpm-workspace.yaml     # workspace 声明：playground/*
 ├─ playground/
 │  ├─ vue/                 # Vue 3 + Vite + TS + vue-i18n
-│  │  ├─ src/locales/      # en-US.json / zh-CN.json
+│  │  ├─ src/locales/      # en-US.json / zh-CN.json（语义化 key）
 │  │  ├─ src/i18n/         # i18n 实例、语言检测、语言切换
 │  │  └─ src/components/LanguageSwitcher.vue
 │  └─ react/               # React 19 + Vite + TS + react-i18next
-│     ├─ src/locales/      # en-US.json / zh-CN.json
-│     ├─ src/i18n/         # i18n 实例、语言检测、语言切换
+│     ├─ src/locales/      # en-US.json / zh-CN.json（中文键 / 中文值）
+│     ├─ src/i18n/         # i18n 实例、中文键查找、__TRANS_ID、useI18n
+│     ├─ src/app-config.ts # 各语言一致的静态标识
 │     └─ src/components/LanguageSwitcher.tsx
 └─ README.md
 ```
@@ -36,7 +42,7 @@ pnpm dev:react    # http://localhost:5174
 
 ## 预览
 
-两个 playground 的界面与交互完全一致（下图：浏览器语言为中文时的默认渲染）：
+下图是浏览器语言为中文时的默认渲染（React 页面底部带「一词多译」演示）：
 
 | Vue 3                                                                                          | React 19                                                                                            |
 | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
@@ -57,30 +63,68 @@ pnpm dev:react    # http://localhost:5174
 
 ## 多语言能力
 
-两个 playground 的行为保持一致：
+两个 playground 共同具备的行为：
 
-1. **语言资源文件**：`src/locales/en-US.json`、`src/locales/zh-CN.json`，由 Vite 直接打包；
-   两个应用使用相同的键名与占位符写法（单花括号 `{name}`），方便统一维护 / 机器翻译。
-   React 侧通过 i18next 的 `interpolation.prefix/suffix` 配置对齐这一写法。
-2. **自动检测**：首次访问依次尝试
-   `localStorage` 中的偏好 → 浏览器语言（`zh-*` 命中中文）→ 默认 `en-US`。
+1. **语言资源文件**：`src/locales/en-US.json`、`src/locales/zh-CN.json`，由 Vite 直接打包。
+2. **自动检测**：首次访问依次尝试 `localStorage` 偏好 → 浏览器语言 → 默认语言。
+   - Vue：`zh-*` 命中中文，其余浏览器默认 `en-US`。
+   - React：`zh-*` / `en-*` 分别命中中文 / 英文，其余浏览器语言（或 SSR）使用中文源语言。
 3. **手动切换**：页面右上角的语言下拉框，切换后所有文案即时更新，不会刷新页面。
 4. **偏好持久化**：选择结果写入 `localStorage`（键：`i18n-playground:locale`），下次访问自动恢复。
 5. **文档元信息同步**：切换语言时同步更新 `<html lang>` 与 `document.title`。
 6. **本地化格式**：演示用 `Intl.DateTimeFormat` / `Intl.NumberFormat` 按当前语言格式化日期与数字。
+7. **占位符**：两端统一使用单花括号 `{name}`（React 侧通过 i18next 的
+   `interpolation.prefix/suffix` 对齐）。
 
 对应实现：
 
-- Vue：`vue-i18n` 的 Composition API（`createI18n({ legacy: false })` + `useI18n()`）。
-- React：`i18next` + `react-i18next`（`initReactI18next` + `useTranslation()`）。
+- Vue：`createI18n({ legacy: false })` + `useI18n()`。
+- React：`initReactI18next` + 自定义 `useI18n()`（见下节）。
+
+### React：中文键 / 中文值 + `__TRANS_ID`
+
+React 应用采用「中文原文即 key」的方案：
+
+- `zh-CN.json`：键 = 中文原文，值 = 中文原文，同时作为待翻译文案清单。
+- `en-US.json`：键与 `zh-CN.json` 相同，值为对应译文。
+
+```jsonc
+// playground/react/src/locales/zh-CN.json
+{ "你好": "你好" }
+
+// playground/react/src/locales/en-US.json
+{ "你好": "hello" }
+```
+
+同一个中文原文在不同场景需要不同译文时，调用时传入 `__TRANS_ID`：
+
+```ts
+const { t } = useI18n()
+
+t('确认', { __TRANS_ID: '1' }) // → en-US.json: { "确认__TRANS_ID_1": "ok" }
+t('确认', { __TRANS_ID: '2' }) // → en-US.json: { "确认__TRANS_ID_2": "yes" }
+```
+
+规则与约束：
+
+- 实际查找的键是 `<中文原文>__TRANS_ID_<id>`，`id` 可以是字符串或数字。
+- 目标语言缺少该变体时，回退到基础文案的译文；再缺失则回退到中文源文案。
+- `zh-CN` 是源语言，始终直接展示中文原文，不会查找带 `__TRANS_ID` 的键。
+- 组件内必须使用 `useI18n()` 返回的 `t`（而非 `useTranslation()`），`__TRANS_ID` 才会生效。
+- `t()` 的入参在编译期被约束为 `zh-CN.json` 中存在的键；`en-US.json` 中若出现不属于
+  中文键、也不符合 `<中文键>__TRANS_ID_<id>` 格式的键，同样会直接类型报错。
+- React 页面底部的「一词多译」区块就是 `__TRANS_ID` 的实时演示：
+  中文下两个按钮都显示「确定」，英文下分别显示 `Confirm` / `OK`。
 
 ### 新增一种语言
 
 以 `ja-JP` 为例，两个应用各做同样的改动：
 
-1. 新增 `src/locales/ja-JP.json`，键名与现有语言包保持一致。
+1. 新增 `src/locales/ja-JP.json`：
+   - Vue：键名与现有语言包保持一致；
+   - React：键名保持中文原文，值为日文译文。
 2. 在 `src/i18n/index.ts` 中：
    - 把 `'ja-JP'` 加入 `SUPPORTED_LOCALES`；
    - 在 `LOCALE_LABELS` 中补充显示名称（如 `日本語`）；
-   - 在初始化 `messages` / `resources` 时引入该 JSON。
-3. 浏览器语言检测若需要支持日语，补充对应的 `startsWith` 判断即可。
+   - 初始化时引入该 JSON（Vue 的 `messages` / React 的 `resources`）。
+3. 如需按浏览器语言自动选择，在 `detectLocale` 中补充 `startsWith('ja')` 判断。

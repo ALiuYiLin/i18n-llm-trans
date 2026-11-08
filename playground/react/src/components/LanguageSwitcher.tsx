@@ -1,13 +1,11 @@
-import { useTranslation } from 'react-i18next'
-import { LOCALE_LABELS, SUPPORTED_LOCALES, normalizeLocale, setLocale } from '../i18n'
+import { LOCALE_LABELS, SUPPORTED_LOCALES, normalizeLocale, setLocale, useI18n } from '../i18n'
 
 export default function LanguageSwitcher() {
-  const { t, i18n } = useTranslation()
-  const locale = normalizeLocale(i18n.resolvedLanguage ?? i18n.language)
+  const { t, locale } = useI18n()
 
   return (
     <label className="language-switcher">
-      <span className="language-switcher__label">{t('languageSwitcher.label')}</span>
+      <span className="language-switcher__label">{t('语言')}</span>
       <select
         className="language-switcher__select"
         value={locale}

@@ -1,26 +1,31 @@
 import { useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
+import { FRAMEWORK_LABEL, STACK_LABEL } from './app-config'
 import LanguageSwitcher from './components/LanguageSwitcher'
 import {
-  DEFAULT_LOCALE,
+  FALLBACK_LOCALE,
   LOCALE_STORAGE_KEY,
   SUPPORTED_LOCALES,
   initialLocaleSource,
-  normalizeLocale,
+  useI18n,
 } from './i18n'
 
 const now = new Date()
 
 const features = [
-  { title: 'features.localeFiles.title', description: 'features.localeFiles.description' },
-  { title: 'features.detection.title', description: 'features.detection.description' },
-  { title: 'features.switcher.title', description: 'features.switcher.description' },
-  { title: 'features.persistence.title', description: 'features.persistence.description' },
+  { title: '语言资源文件', description: '翻译存放在 src/locales/*.json 中，键名就是中文原文。' },
+  { title: '自动识别语言', description: '首次访问时跟随浏览器语言，无法识别时使用中文源文案。' },
+  { title: '即时切换', description: '切换语言会同时更新界面、<html lang> 属性和页面标题。' },
+  { title: '记住选择', description: '你的选择会写入 localStorage，下次访问时自动恢复。' },
 ] as const
 
+const detectionSourceText = {
+  storage: '本地保存的偏好',
+  browser: '浏览器语言',
+  default: '默认回退',
+} as const
+
 export default function App() {
-  const { t, i18n } = useTranslation()
-  const locale = normalizeLocale(i18n.resolvedLanguage ?? i18n.language)
+  const { t, locale } = useI18n()
 
   const dateTime = useMemo(
     () => new Intl.DateTimeFormat(locale, { dateStyle: 'full', timeStyle: 'short' }).format(now),
@@ -32,10 +37,10 @@ export default function App() {
     <div className="page">
       <header className="page__header">
         <div className="brand">
-          <span className="brand__badge">{t('app.framework')}</span>
+          <span className="brand__badge">{FRAMEWORK_LABEL}</span>
           <div className="brand__text">
-            <h1>{t('app.title')}</h1>
-            <p>{t('app.stack')}</p>
+            <h1>{t('i18n 演练场')}</h1>
+            <p>{STACK_LABEL}</p>
           </div>
         </div>
         <LanguageSwitcher />
@@ -43,24 +48,28 @@ export default function App() {
 
       <main className="page__main">
         <section className="hero">
-          <p className="hero__eyebrow">{t('app.tagline')}</p>
-          <h2>{t('hero.greeting', { name: t('hero.name') })}</h2>
-          <p className="hero__description">{t('hero.description', { framework: t('app.framework') })}</p>
+          <p className="hero__eyebrow">{t('同一套界面，运行时切换语言。')}</p>
+          <h2>{t('你好，{name}！', { name: t('朋友') })}</h2>
+          <p className="hero__description">
+            {t('本页面使用 {framework} 构建。在下方切换语言，所有文案会立即更新，无需刷新页面。', {
+              framework: FRAMEWORK_LABEL,
+            })}
+          </p>
           <ul className="pills">
             <li>
-              {t('status.currentLocale')}: <code>{locale}</code>
+              {t('当前语言')}: <code>{locale}</code>
             </li>
             <li>
-              {t('status.fallbackLocale')}: <code>{DEFAULT_LOCALE}</code>
+              {t('回退语言')}: <code>{FALLBACK_LOCALE}</code>
             </li>
             <li>
-              {t('status.detectionSource')}: {t(`sources.${initialLocaleSource}`)}
+              {t('初始识别来源')}: {t(detectionSourceText[initialLocaleSource])}
             </li>
           </ul>
         </section>
 
         <section className="section">
-          <h3>{t('features.title')}</h3>
+          <h3>{t('本演练场包含')}</h3>
           <ul className="features">
             {features.map((feature) => (
               <li key={feature.title} className="card">
@@ -72,23 +81,38 @@ export default function App() {
         </section>
 
         <section className="section">
-          <h3>{t('formats.title')}</h3>
+          <h3>{t('本地化格式')}</h3>
           <dl className="formats">
             <div className="formats__item">
-              <dt>{t('formats.dateTime')}</dt>
+              <dt>{t('日期与时间')}</dt>
               <dd>{dateTime}</dd>
             </div>
             <div className="formats__item">
-              <dt>{t('formats.number')}</dt>
+              <dt>{t('数字')}</dt>
               <dd>{number}</dd>
             </div>
           </dl>
         </section>
+
+        <section className="section">
+          <h3>{t('一词多译')}</h3>
+          <p className="section__hint">
+            {t('同一个中文词在不同场景下可以对应不同的英文，通过 __TRANS_ID 区分。')}
+          </p>
+          <div className="demo-actions">
+            <button type="button" className="demo-button">
+              {t('确定', { __TRANS_ID: 'action' })}
+            </button>
+            <button type="button" className="demo-button">
+              {t('确定', { __TRANS_ID: 'ack' })}
+            </button>
+          </div>
+        </section>
       </main>
 
       <footer className="page__footer">
-        <p>{t('footer.note', { key: LOCALE_STORAGE_KEY })}</p>
-        <p>{t('footer.supported', { locales: SUPPORTED_LOCALES.join(' / ') })}</p>
+        <p>{t('语言偏好存储键：{key}', { key: LOCALE_STORAGE_KEY })}</p>
+        <p>{t('已支持语言：{locales}', { locales: SUPPORTED_LOCALES.join(' / ') })}</p>
       </footer>
     </div>
   )
