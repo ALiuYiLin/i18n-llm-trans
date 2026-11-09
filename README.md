@@ -4,7 +4,7 @@ English | [简体中文](README.zh-CN.md)
 
 A runtime-agnostic i18n workflow CLI: it scans `t()` calls, maintains locale JSON files, and
 optionally calls an LLM for translations. There is no React/Vue runtime package — implement `t()`
-in your app following the [contract](docs/i18n-contract.md).
+in your app following the [contract](docs/i18n-contract.en.md).
 
 - **`i18n:check`**: statically scan `t()` calls with Babel (TS/TSX and Vue SFC), diff source and
   target locale JSON, and report missing, unused, and extra keys;
@@ -22,7 +22,7 @@ micro-frontends, …), so a generic wrapper package is unlikely to cover every s
 depends on two things: the JSON key format and the shape of `t()` calls. This repository therefore
 maintains only the CLI and leaves the runtime to the application:
 
-- Contract and type template: [docs/i18n-contract.md](docs/i18n-contract.md),
+- Contract and type template: [docs/i18n-contract.en.md](docs/i18n-contract.en.md),
   [docs/templates/translator.ts](docs/templates/translator.ts)
 - React reference implementation: [playground/react/src/i18n/index.ts](playground/react/src/i18n/index.ts)
 - Vue reference implementation: [playground/vue/src/i18n/index.ts](playground/vue/src/i18n/index.ts)
@@ -48,7 +48,7 @@ i18n-llm-trans/
 │     ├─ src/locales/            # zh-CN / en-US (source text as keys)
 │     └─ i18n.config.json
 ├─ docs/
-│  ├─ i18n-contract.md           # data format + t() behavior contract
+│  ├─ i18n-contract.md, .en.md    # data format + t() behavior contract
 │  ├─ templates/translator.ts    # copyable t() core implementation
 │  └─ *.png                      # preview screenshots
 └─ README.md
@@ -154,7 +154,7 @@ type Translate = (
 - the source locale returns the raw source text; interpolation supports `{name}` (vue-i18n) and
   `{{name}}` (i18next), and translations must preserve the same style; JSON is flat and
   `keySeparator` must be disabled;
-- full contract and type template: [docs/i18n-contract.md](docs/i18n-contract.md);
+- full contract and type template: [docs/i18n-contract.en.md](docs/i18n-contract.en.md);
   copy [docs/templates/translator.ts](docs/templates/translator.ts) directly if useful.
 
 ## playground/react reference implementation
