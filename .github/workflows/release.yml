@@ -1,0 +1,109 @@
+name: Release npm package
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: npm-publish-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v7
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Verify npm version
+        run: |
+          NPM_VERSION=$(npm --version)
+          echo "npm $NPM_VERSION"
+          node -e "const [major, minor] = process.argv[1].split('.').map(Number); if (major < 11 || (major === 11 && minor < 5)) { console.error('npm >= 11.5.1 is required for Trusted Publishing'); process.exit(1) }" "$NPM_VERSION"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Detect version update
+        id: version
+        run: |
+          set -euo pipefail
+          LOCAL=$(node -p "require('./packages/i18n-trans/package.json').version")
+          PUBLISHED=$(npm view @10coding/i18n-trans version 2>/dev/null || true)
+          echo "local=$LOCAL"
+          echo "published=${PUBLISHED:-<not published>}"
+          echo "version=$LOCAL" >> "$GITHUB_OUTPUT"
+
+          if [ -z "$PUBLISHED" ]; then
+            echo "::error::@10coding/i18n-trans is not on npm yet. Publish the first version manually, configure Trusted Publishing, then re-run."
+            exit 1
+          fi
+
+          if [ "$LOCAL" = "$PUBLISHED" ]; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "Version $LOCAL is already published, nothing to do."
+            exit 0
+          fi
+
+          if [ "$(printf '%s\n%s\n' "$PUBLISHED" "$LOCAL" | sort -V | tail -n1)" = "$LOCAL" ]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            echo "Version update detected: $PUBLISHED -> $LOCAL"
+          else
+            echo "::error::local version $LOCAL is lower than published version $PUBLISHED"
+            exit 1
+          fi
+
+      - name: Build and test
+        if: steps.version.outputs.publish == 'true'
+        run: |
+          pnpm --filter @10coding/i18n-trans test
+          pnpm --filter @10coding/i18n-trans build
+
+      - name: Publish to npm
+        if: steps.version.outputs.publish == 'true'
+        run: |
+          cd packages/i18n-trans
+          npm publish --access public
+
+      - name: Ensure tag and GitHub Release
+        if: steps.version.outputs.version != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="v${{ steps.version.outputs.version }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git ls-remote --tags origin "refs/tags/$TAG" | grep -q "refs/tags/$TAG"; then
+            echo "Tag $TAG already exists."
+          else
+            git tag -a "$TAG" -m "Release $TAG"
+            git push origin "refs/tags/$TAG"
+          fi
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists."
+          else
+            gh release create "$TAG" --title "$TAG" --generate-notes
+          fi

@@ -167,6 +167,18 @@ type Translate = (
 
 Vue 和 React 的差异只在运行时实现（vue-i18n / i18next），语言数据格式、标记与 CLI 行为完全一致。
 
+## 发布
+
+只有 `@10coding/i18n-trans` 会发布到 npm，流程见 [.changeset/README.md](.changeset/README.md)：
+
+1. 本地 `pnpm changeset` 记录变更；
+2. `pnpm changeset version` 更新版本和 CHANGELOG；
+3. 提交后开 PR 到 `master`；
+4. 合并后 [release.yml](.github/workflows/release.yml) 比较包版本与 npm latest：
+   有更新才执行 build/test/publish；`vX.Y.Z` tag 与 GitHub Release 会做幂等 ensure。
+
+没有 `changeset-release/*` 分支和 Version Packages PR；其他分支不触发任何 workflow。
+
 ## 新增语言 / 翻译流程
 
 1. 新建 `src/locales/ja-JP.json`（空对象即可）；
