@@ -11,6 +11,7 @@
   },
   "translation": {
     "placeholderMarker": "⟦TODO⟧",
+    "reviewMarker": "⟦REVIEW⟧",
     "batchSize": 20,
     "contextLines": 0,
     "hints": {

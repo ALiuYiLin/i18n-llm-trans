@@ -6,6 +6,7 @@ export const CONFIG_FILENAME = 'i18n.config.json'
 
 const TRANSLATION_DEFAULTS: TranslationConfig = {
   placeholderMarker: '⟦TODO⟧',
+  reviewMarker: '⟦REVIEW⟧',
   batchSize: 20,
   contextLines: 0,
   hints: {},
@@ -53,6 +54,14 @@ export async function loadConfig(cwd: string): Promise<LoadedConfig> {
 
   if (translation.placeholderMarker.length === 0) {
     throw new Error(`"translation.placeholderMarker" must not be empty in ${path}`)
+  }
+  if (translation.reviewMarker.length === 0) {
+    throw new Error(`"translation.reviewMarker" must not be empty in ${path}`)
+  }
+  if (translation.placeholderMarker === translation.reviewMarker) {
+    throw new Error(
+      `"translation.placeholderMarker" and "translation.reviewMarker" must be different in ${path}`,
+    )
   }
   if (!Number.isInteger(translation.batchSize) || translation.batchSize < 1) {
     throw new Error(`"translation.batchSize" must be a positive integer in ${path}`)

@@ -105,9 +105,9 @@ describe('runTrans', () => {
     expect(result.exitCode).toBe(0)
     expect(await readMessages(dir, 'en-US')).toMatchObject({
       你好: 'Hello',
-      保存: '⟦TODO⟧ Save',
-      删除: '⟦TODO⟧ Delete',
-      删除__TRANS_ID_remove: '⟦TODO⟧ Remove',
+      保存: '⟦REVIEW⟧ Save',
+      删除: '⟦REVIEW⟧ Delete',
+      删除__TRANS_ID_remove: '⟦REVIEW⟧ Remove',
     })
     expect(calls).toHaveLength(1)
   })
@@ -246,7 +246,7 @@ describe('runTrans', () => {
 
     expect(calls[0]?.units.map((unit) => unit.key)).toEqual(['保存'])
     expect(result.translated).toBe(1)
-    expect(await readMessages(dir, 'en-US')).toEqual({ 保存: '⟦TODO⟧ Save' })
+    expect(await readMessages(dir, 'en-US')).toEqual({ 保存: '⟦REVIEW⟧ Save' })
   })
 
   it('--ignore writes translations without the review marker', async () => {
@@ -270,7 +270,7 @@ describe('runTrans', () => {
     const dir = await createProject(
       projectFiles({
         source: { 你好: '你好' },
-        target: { 你好: '⟦TODO⟧ Hello' },
+        target: { 你好: '⟦REVIEW⟧ Hello' },
         code: `export const a = t('你好')`,
       }),
     )
@@ -286,6 +286,43 @@ describe('runTrans', () => {
     expect(called).toBe(false)
     expect(result.translated).toBe(0)
     expect(result.exitCode).toBe(0)
-    expect(await readMessages(dir, 'en-US')).toEqual({ 你好: '⟦TODO⟧ Hello' })
+    expect(await readMessages(dir, 'en-US')).toEqual({ 你好: '⟦REVIEW⟧ Hello' })
+  })
+
+  it('treats ⟦REVIEW⟧ + source text as a translation awaiting review, not a placeholder', async () => {
+    const dir = await createProject(
+      projectFiles({
+        source: { 你好: '你好' },
+        target: { 你好: '⟦REVIEW⟧ 你好' },
+        code: `export const a = t('你好')`,
+      }),
+    )
+
+    let called = false
+    const result = await runTrans(options(dir), {
+      translateBatch: async () => {
+        called = true
+        return { 你好: 'Hello' }
+      },
+    })
+
+    expect(called).toBe(false)
+    expect(result.translated).toBe(0)
+    expect(await readMessages(dir, 'en-US')).toEqual({ 你好: '⟦REVIEW⟧ 你好' })
+  })
+
+  it('rejects identical placeholder and review markers', async () => {
+    const dir = await createProject(
+      projectFiles({
+        source: { 你好: '你好' },
+        target: {},
+        code: `export const a = t('你好')`,
+        translation: { placeholderMarker: '⟦X⟧', reviewMarker: '⟦X⟧' },
+      }),
+    )
+
+    await expect(
+      runTrans(options(dir), { translateBatch: async () => ({}) }),
+    ).rejects.toThrow(/must be different/)
   })
 })

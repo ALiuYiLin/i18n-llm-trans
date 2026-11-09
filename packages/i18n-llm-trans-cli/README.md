@@ -82,7 +82,7 @@ CLI 读取工作目录下的 `i18n.config.json`：
 | `targetLocales` | 目标语言列表 | `localesDir` 下除源语言外的全部文件 |
 | `callers` | 视为翻译调用的函数名 | `["t", "translate"]` |
 | `transId` | 一词多译标记 | `__TRANS_ID` / `__TRANS_ID_` |
-| `translation` | 翻译配置：`placeholderMarker` / `batchSize` / `contextLines` / `hints` / `glossary` / `ignoreKeys` / `maxRetries` / `jsonMode` | 见下方
+| `translation` | 翻译配置：`placeholderMarker` / `reviewMarker` / `batchSize` / `contextLines` / `hints` / `glossary` / `ignoreKeys` / `maxRetries` / `jsonMode` | 见下方 |
 
 ## 检查规则
 
@@ -126,11 +126,16 @@ I18N_LLM_JSON_MODE=true
 ### 未翻译判定
 
 - 目标 JSON 缺少该 key；
-- 值是 marker 占位：`<marker> <源文>`（`translation.placeholderMarker`，默认 `⟦TODO⟧ 原文`）；
+- 值是缺失占位：`<placeholderMarker> <源文>`（默认 `⟦TODO⟧ 原文`）；
 - 兼容旧数据：值等于源语言原文也算未翻译（用 `translation.ignoreKeys` 排除本来就应该相同的词）。
 
-marker + 译文（如 `⟦TODO⟧ Hello`）代表「AI 已翻译、等待人工复核」，`trans` 不会重复翻译；
-人工用编辑器全局搜索 `⟦TODO⟧` 去掉标记即可。
+两类 marker 是分开的：
+
+| 标记 | 含义 | 处理 |
+| --- | --- | --- |
+| `⟦TODO⟧ 原文` | `--add-target` 补的缺失占位 | `trans` 翻译 |
+| `⟦REVIEW⟧ 译文` | AI 已翻译、等待人工复核 | `trans` 跳过，人工搜索 `⟦REVIEW⟧` 去除 |
+| 无标记译文 | 已翻译 | 跳过 |
 
 判定完全基于 key 集合与标记，不依赖模型。
 
@@ -151,7 +156,7 @@ marker + 译文（如 `⟦TODO⟧ Hello`）代表「AI 已翻译、等待人工�
 - 一次请求发送 `unit[]`（受 `translation.batchSize` 限制，串行、不并发），要求返回 `result[]`；
 - 校验响应：key 集合一致、值非空、`{name}` 等占位符一致；失败按 `maxRetries` 重试，
   仍失败则记录错误、不写入坏数据；
-- AI 译文默认写成 `<marker> <译文>`（如 `⟦TODO⟧ Hello`），方便编辑器全局搜索人工复核；
+- AI 译文默认写成 `<reviewMarker> <译文>`（默认 `⟦REVIEW⟧ Hello`），方便全局搜索人工复核；
   `--ignore` 则直接写入不带标记的译文；
 - 只替换未翻译 / 占位值，**不覆盖已有译文**；
 - 完成后自动跑一次 `i18n-llm-trans check`，仍有缺失时退出码为 1；

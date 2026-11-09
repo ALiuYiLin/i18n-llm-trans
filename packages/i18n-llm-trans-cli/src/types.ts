@@ -4,8 +4,10 @@ export interface TransIdOptions {
 }
 
 export interface TranslationConfig {
-  /** Prefix used for target-locale placeholder values, e.g. `⟦TODO⟧ 你好`. */
+  /** Prefix used for missing-key placeholder values written by `--add-target`. */
   placeholderMarker: string
+  /** Prefix used for AI translations that still need human review. */
+  reviewMarker: string
   /** Maximum number of units sent to the model in one request. */
   batchSize: number
   /** Number of extra source lines included as translation context. */

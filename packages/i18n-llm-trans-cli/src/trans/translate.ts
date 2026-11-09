@@ -6,7 +6,7 @@ import { loadLlmEnv } from '../env'
 import { buildVariants, dedupeUsages, expectedTargetKeys } from '../keys'
 import { createOpenAiChatClient, type ChatClient } from '../llm/openai'
 import { listLocales, readLocaleFile, writeLocaleFile, type LocaleFile } from '../locales'
-import { formatPlaceholder, isPlaceholderValue } from '../placeholder'
+import { formatMarker, isPlaceholderValue, isReviewValue } from '../placeholder'
 import { scanProject } from '../project'
 import { buildMessages, parseTranslationResponse, validateTranslations } from './prompt'
 import type {
@@ -117,6 +117,7 @@ export async function runTrans(
     options.keys && options.keys.length > 0 ? new Set(options.keys) : undefined
   const useContext = options.useContext ?? true
   const marker = config.translation.placeholderMarker
+  const reviewMarker = config.translation.reviewMarker
   const ignoreKeys = new Set(config.translation.ignoreKeys)
 
   let remaining = options.limit ?? Number.POSITIVE_INFINITY
@@ -143,8 +144,12 @@ export async function runTrans(
           skipped += 1
           continue
         }
-        // Placeholder values still need translation; marker-prefixed translations
-        // are waiting for manual review and must not be translated again.
+        // AI translations waiting for human review must not be translated again.
+        if (isReviewValue(current, reviewMarker)) {
+          skipped += 1
+          continue
+        }
+        // Placeholder values still need translation.
         if (!isPlaceholderValue(current, marker, sourceText)) {
           skipped += 1
           continue
@@ -246,7 +251,7 @@ export async function runTrans(
         // Mark AI translations for manual review unless --ignore was passed.
         group.file.messages[unit.key] = options.ignore
           ? value
-          : formatPlaceholder(marker, value)
+          : formatMarker(reviewMarker, value)
       }
       await writeLocaleFile(group.file)
       translated += batch.length

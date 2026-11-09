@@ -1,16 +1,31 @@
-/** Placeholder / review markers written to target locale values. */
-export function formatPlaceholder(marker: string, text: string): string {
+/** Format a marked value, e.g. `⟦TODO⟧ 你好` or `⟦REVIEW⟧ Hello`. */
+export function formatMarker(marker: string, text: string): string {
   return `${marker} ${text}`
+}
+
+/** Missing-key placeholder written by `--add-target`, e.g. `⟦TODO⟧ 你好`. */
+export function formatPlaceholder(marker: string, sourceText: string): string {
+  return formatMarker(marker, sourceText)
 }
 
 /**
  * A target value is considered untranslated only when it is a placeholder for the
- * source text: the raw source text, the bare marker, or `<marker> <sourceText>`.
- *
- * A marker-prefixed value with a different text is an AI translation waiting for
- * manual review, so `trans` must leave it alone (otherwise re-running would
- * translate it again and stack markers).
+ * source text: the raw source text, the bare placeholder marker, or
+ * `<placeholderMarker> <sourceText>`.
  */
-export function isPlaceholderValue(value: string, marker: string, sourceText: string): boolean {
-  return value === sourceText || value === marker || value === formatPlaceholder(marker, sourceText)
+export function isPlaceholderValue(
+  value: string,
+  placeholderMarker: string,
+  sourceText: string,
+): boolean {
+  return (
+    value === sourceText ||
+    value === placeholderMarker ||
+    value === formatPlaceholder(placeholderMarker, sourceText)
+  )
+}
+
+/** A value written by `trans` that still needs human review. */
+export function isReviewValue(value: string, reviewMarker: string): boolean {
+  return value === reviewMarker || value.startsWith(`${reviewMarker} `)
 }
