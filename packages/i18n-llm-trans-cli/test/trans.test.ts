@@ -311,6 +311,43 @@ describe('runTrans', () => {
     expect(await readMessages(dir, 'en-US')).toEqual({ 你好: '⟦REVIEW⟧ 你好' })
   })
 
+  it('translates strings with double-brace placeholders (i18next style)', async () => {
+    const key = '你好，{{name}}！'
+    const dir = await createProject(
+      projectFiles({
+        source: { [key]: key },
+        target: {},
+        code: `export const a = t('你好，{{name}}！', { name: 'friend' })`,
+      }),
+    )
+
+    const result = await runTrans(options(dir), {
+      translateBatch: fakeTranslator({ [key]: 'Hello, {{name}}!' }),
+    })
+
+    expect(result.translated).toBe(1)
+    expect(await readMessages(dir, 'en-US')).toEqual({ [key]: '⟦REVIEW⟧ Hello, {{name}}!' })
+  })
+
+  it('rejects translations that change the placeholder brace style', async () => {
+    const key = '你好，{{name}}！'
+    const dir = await createProject(
+      projectFiles({
+        source: { [key]: key },
+        target: {},
+        code: `export const a = t('你好，{{name}}！', { name: 'friend' })`,
+      }),
+    )
+
+    const result = await runTrans(options(dir), {
+      translateBatch: fakeTranslator({ [key]: 'Hello, {name}!' }),
+    })
+
+    expect(result.failed).toBe(1)
+    expect(result.exitCode).toBe(1)
+    expect(await readMessages(dir, 'en-US')).toEqual({})
+  })
+
   it('rejects identical placeholder and review markers', async () => {
     const dir = await createProject(
       projectFiles({

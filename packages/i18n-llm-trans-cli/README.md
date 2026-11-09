@@ -157,7 +157,8 @@ I18N_LLM_JSON_MODE=true
 ### 行为
 
 - 一次请求发送 `unit[]`（受 `translation.batchSize` 限制，串行、不并发），要求返回 `result[]`；
-- 校验响应：key 集合一致、值非空、`{name}` 等占位符一致；失败按 `maxRetries` 重试，
+- 校验响应：key 集合一致、值非空、占位符 token（`{name}` / `{{name}}`，保留花括号样式）与源文一致；
+  失败按 `maxRetries` 重试，
   仍失败则记录错误、不写入坏数据；
 - AI 译文默认写成 `<reviewMarker> <译文>`（默认 `⟦REVIEW⟧ Hello`），方便全局搜索人工复核；
   `--ignore` 则直接写入不带标记的译文；

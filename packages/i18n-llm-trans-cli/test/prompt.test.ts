@@ -13,8 +13,19 @@ const units: TranslationUnit[] = [
 ]
 
 describe('extractPlaceholders', () => {
-  it('returns unique sorted placeholders', () => {
-    expect(extractPlaceholders('你好，{name}！{count} {name}')).toEqual(['{count}', '{name}'])
+  it('extracts single-brace placeholders and keeps duplicates', () => {
+    expect(extractPlaceholders('你好，{name}！{count} {name}')).toEqual([
+      '{count}',
+      '{name}',
+      '{name}',
+    ])
+  })
+
+  it('extracts double-brace placeholders without mixing brace styles', () => {
+    expect(extractPlaceholders('Hello, {{name}}! You have {{count}} items.')).toEqual([
+      '{{count}}',
+      '{{name}}',
+    ])
   })
 })
 
@@ -51,6 +62,21 @@ describe('validateTranslations', () => {
         { 你好: 'Hello, friend!' },
       ),
     ).toThrow(/Placeholder mismatch/)
+  })
+
+  it('requires the same brace style as the source', () => {
+    expect(() =>
+      validateTranslations(
+        [{ key: '你好', source: '你好，{{name}}！' }],
+        { 你好: 'Hello, {name}!' },
+      ),
+    ).toThrow(/Placeholder mismatch/)
+    expect(() =>
+      validateTranslations(
+        [{ key: '你好', source: '你好，{{name}}！' }],
+        { 你好: 'Hello, {{name}}!' },
+      ),
+    ).not.toThrow()
   })
 })
 

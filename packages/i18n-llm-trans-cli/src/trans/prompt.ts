@@ -1,9 +1,29 @@
 import type { ChatMessage } from '../llm/openai'
 import type { TranslationRequest, TranslationUnit } from '../types'
 
+/**
+ * Extract interpolation placeholders while preserving brace style.
+ *
+ * Supports both `{name}` (vue-i18n default) and `{{name}}` (i18next default).
+ * Double braces are matched first so `{{name}}` is not reported as `{name}`.
+ * Duplicates are kept, so losing an occurrence also fails validation.
+ */
 export function extractPlaceholders(text: string): string[] {
-  const matches = text.match(/\{[a-zA-Z0-9_]+\}/g) ?? []
-  return [...new Set(matches)].sort()
+  const tokens: string[] = []
+  const doubleBrace = /\{\{\s*([^{}\s]+)\s*\}\}/g
+  const singleBrace = /\{\s*([^{}\s]+)\s*\}/g
+
+  const masked = text.replace(doubleBrace, (match, name: string) => {
+    tokens.push(`{{${name.trim()}}}`)
+    return ' '.repeat(match.length)
+  })
+
+  for (const match of masked.matchAll(singleBrace)) {
+    const name = match[1]?.trim()
+    if (name) tokens.push(`{${name}}`)
+  }
+
+  return tokens.sort()
 }
 
 export function buildMessages(request: TranslationRequest): ChatMessage[] {
@@ -17,7 +37,8 @@ export function buildMessages(request: TranslationRequest): ChatMessage[] {
     'Rules:',
     '- Include exactly the input keys, in the same order. Never rename, add, or omit keys.',
     '- Translate only the "source" text; never translate the key.',
-    '- Preserve interpolation placeholders (e.g. {name}, {count}) and HTML tags exactly.',
+    '- Preserve interpolation placeholders exactly, including the brace style:',
+    '  `{name}` and `{{name}}` are different and must stay as in the source. Keep HTML tags intact.',
     '- Keep numbers, product names and code identifiers unchanged when appropriate.',
     '- Use "context" and "hint" to choose the right meaning. Keys that share the same source text',
     '  but carry different disambiguation values are variants and may need different translations.',

@@ -57,15 +57,19 @@ type Translate = (source: SourceKey, options?: TranslateOptions | TransId) => st
    3. 源语言 `<原文>`；
    4. 原文本身。
 4. 当前语言 == 源语言时，直接返回原文；
-5. 插值统一单花括号 `{name}`（CLI 的占位符校验依赖该格式）；
-6. key 是任意原文，必须关闭 i18next 的 key/namespace 分隔：
+5. 插值支持两种写法，CLI 自动识别并要求译文保留相同 token（含花括号样式）：
+   - `{name}`：vue-i18n 默认写法；
+   - `{{name}}`：i18next 默认写法；
+   - 也允许整个项目只用其中一种；CLI 不做强制，只看源文与译文的占位符是否一一对应；
+6. key 是任意原文，i18next 必须关闭 key/namespace 分隔；插值前缀可保持默认，也可改成单花括号：
 
 ```ts
 i18n.init({
   fallbackLng: 'zh-CN',
   keySeparator: false,
   nsSeparator: false,
-  interpolation: { prefix: '{', suffix: '}' },
+  // i18next 默认 {{name}}；如需单花括号再打开下面这行：
+  // interpolation: { prefix: '{', suffix: '}' },
 })
 ```
 

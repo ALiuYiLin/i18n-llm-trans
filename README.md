@@ -134,7 +134,8 @@ type Translate = (
 
 - `t('删除', 'remove')` 等价于 `t('删除', { __TRANS_ID: 'remove' })`；
 - 查找顺序：目标语言 `删除__TRANS_ID_remove` → 目标语言 `删除` → 源语言 `删除` → 原文；
-- 源语言直接返回原文；插值统一 `{name}`；JSON 扁平、关闭 keySeparator；
+- 源语言直接返回原文；插值支持 `{name}`（vue-i18n）与 `{{name}}`（i18next），译文需保留相同写法；
+  JSON 扁平、关闭 keySeparator；
 - 完整说明与类型模板：[docs/i18n-contract.md](docs/i18n-contract.md)，
   可直接复制 [docs/templates/translator.ts](docs/templates/translator.ts)。
 
