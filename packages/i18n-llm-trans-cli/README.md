@@ -9,6 +9,9 @@
 - `trans` 子命令通过 OpenAI-compatible LLM 翻译未翻译 / 占位 key（`.env` 配置 API）；
 - 纯非交互：CI 里直接跑，靠退出码判断。
 
+数据格式与 `t()` 行为契约见 [docs/i18n-contract.md](../../docs/i18n-contract.md)，
+运行时由应用自行实现，本包不提供任何框架绑定。
+
 ## 使用
 
 ```bash
