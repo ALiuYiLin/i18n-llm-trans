@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { useI18n } from 'vue-i18n'
-import { LOCALE_LABELS, SUPPORTED_LOCALES, normalizeLocale, setLocale } from '../i18n'
+import { LOCALE_LABELS, SUPPORTED_LOCALES, normalizeLocale, setLocale, useI18n } from '../i18n'
 
 const { t, locale } = useI18n()
 
@@ -11,7 +10,7 @@ function handleChange(event: Event): void {
 
 <template>
   <label class="language-switcher">
-    <span class="language-switcher__label">{{ t('languageSwitcher.label') }}</span>
+    <span class="language-switcher__label">{{ t('语言') }}</span>
     <select class="language-switcher__select" :value="locale" @change="handleChange">
       <option v-for="value in SUPPORTED_LOCALES" :key="value" :value="value">
         {{ LOCALE_LABELS[value] }}

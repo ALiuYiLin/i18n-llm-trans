@@ -112,6 +112,7 @@ export function scanCode(
   code: string,
   filename: string,
   options: Pick<I18nConfig, 'callers' | 'transId'>,
+  parserFilename: string = filename,
 ): ScanResult {
   const usages: Usage[] = []
   const dynamicUsages: DynamicUsage[] = []
@@ -122,7 +123,7 @@ export function scanCode(
     ast = parse(code, {
       sourceType: 'unambiguous',
       errorRecovery: true,
-      plugins: parserPlugins(filename),
+      plugins: parserPlugins(parserFilename),
     })
   } catch (error) {
     throw new Error(`Failed to parse ${filename}: ${(error as Error).message}`)
@@ -175,3 +176,96 @@ export function scanCode(
 
   return { usages, dynamicUsages, literals }
 }
+
+interface VueSnippet {
+  code: string
+  lineOffset: number
+  required: boolean
+}
+
+function countNewlinesBefore(text: string, index: number): number {
+  return (text.slice(0, index).match(/\n/g) ?? []).length
+}
+
+function collectVueSnippets(source: string): VueSnippet[] {
+  const snippets: VueSnippet[] = []
+
+  for (const match of source.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)) {
+    const content = match[1] ?? ''
+    const contentStart = (match.index ?? 0) + match[0].indexOf('>') + 1
+    snippets.push({
+      code: content,
+      lineOffset: countNewlinesBefore(source, contentStart),
+      required: true,
+    })
+  }
+
+  const templateMatch = /<template\b[^>]*>([\s\S]*)<\/template>/.exec(source)
+  if (!templateMatch) return snippets
+
+  const template = templateMatch[1] ?? ''
+  const templateStart = (templateMatch.index ?? 0) + templateMatch[0].indexOf('>') + 1
+
+  const addExpression = (expression: string, startInTemplate: number): void => {
+    const trimmed = expression.trim()
+    if (!trimmed) return
+    const leading = Math.max(0, expression.indexOf(trimmed))
+    const sourceStart = templateStart + startInTemplate + leading
+    snippets.push({
+      code: `void (${trimmed});`,
+      lineOffset: countNewlinesBefore(source, sourceStart),
+      required: false,
+    })
+  }
+
+  // {{ expression }} interpolations.
+  for (const match of template.matchAll(/\{\{([\s\S]*?)\}\}/g)) {
+    addExpression(match[1] ?? '', (match.index ?? 0) + 2)
+  }
+
+  // Directive expressions such as :title="t('x')" / @click="..." / v-if="...".
+  for (const match of template.matchAll(/(?::|@|v-)[\w:.-]+\s*=\s*"([^"]*)"/g)) {
+    const expression = match[1] ?? ''
+    const startInTemplate = (match.index ?? 0) + match[0].indexOf('"') + 1
+    addExpression(expression, startInTemplate)
+  }
+
+  return snippets
+}
+
+/**
+ * Scan a Vue single-file component: `<script>` blocks plus template expressions
+ * (`{{ ... }}` and directive attributes). Template expressions that are not valid
+ * standalone JavaScript (e.g. `v-for="item in items"`) are ignored.
+ */
+export function scanVueSfc(
+  source: string,
+  filename: string,
+  options: Pick<I18nConfig, 'callers' | 'transId'>,
+): ScanResult {
+  const result: ScanResult = {
+    usages: [],
+    dynamicUsages: [],
+    literals: new Set<string>(),
+  }
+
+  for (const snippet of collectVueSnippets(source)) {
+    const code = `${'\n'.repeat(snippet.lineOffset)}${snippet.code}`
+    try {
+      const partial = scanCode(code, filename, options, `${filename}.ts`)
+      result.usages.push(...partial.usages)
+      result.dynamicUsages.push(...partial.dynamicUsages)
+      for (const literal of partial.literals) result.literals.add(literal)
+    } catch (error) {
+      if (snippet.required) {
+        throw new Error(
+          `Failed to parse <script> in ${filename}: ${(error as Error).message}`,
+        )
+      }
+      // Template directives like v-for are not standalone JS expressions; skip them.
+    }
+  }
+
+  return result
+}
+

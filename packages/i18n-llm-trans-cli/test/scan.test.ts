@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { scanCode } from '../src/scan'
+import { scanCode, scanVueSfc } from '../src/scan'
 import type { I18nConfig } from '../src/types'
 
 const options: Pick<I18nConfig, 'callers' | 'transId'> = {
@@ -48,5 +48,26 @@ describe('scanCode', () => {
     const result = scanCode(`const keys = ['动态键']; t(keys[0])`, 'src/App.tsx', options)
     expect(result.literals.has('动态键')).toBe(true)
     expect(result.dynamicUsages).toHaveLength(1)
+  })
+
+  it('scans Vue single-file component scripts and template expressions', () => {
+    const sfc = [
+      '<template>',
+      "  <h1>{{ t('你好，{name}！', { name: t('朋友') }) }}</h1>",
+      '  <button :title="t(\'删除\', \'remove\')">{{ t(\'删除\') }}</button>',
+      '</template>',
+      '<script setup lang="ts">',
+      "import { useI18n } from './i18n'",
+      'const { t } = useI18n()',
+      "const saved = t('保存')",
+      '</script>',
+    ].join('\n')
+
+    const result = scanVueSfc(sfc, 'src/App.vue', options)
+
+    expect(result.usages.map((usage) => usage.source).sort()).toEqual(
+      ['你好，{name}！', '保存', '删除', '删除', '朋友'].sort(),
+    )
+    expect(result.dynamicUsages).toHaveLength(0)
   })
 })

@@ -1,6 +1,8 @@
 # @10coding/i18n-llm-trans-cli
 
-静态扫描 `t()` 调用（Babel），检查并维护「源语言原文即 key」的语言 JSON 文件的 CLI。
+静态扫描 `t()` 调用（Babel；TS/TSX 与 Vue SFC），检查并维护「源语言原文即 key」的语言 JSON 文件的 CLI。
+
+- 支持 TS/TSX 与 Vue 单文件组件（`<script>` + 模板表达式 `{{ }}` / 指令属性）；
 
 - 统计代码中的静态 `t()` key，与 `locales/*.json` 对比；
 - 报告源语言缺失 / 未使用、目标语言缺失译文 / 多余 key；
@@ -86,6 +88,8 @@ CLI 读取工作目录下的 `i18n.config.json`：
 | `callers` | 视为翻译调用的函数名 | `["t", "translate"]` |
 | `transId` | 一词多译标记 | `__TRANS_ID` / `__TRANS_ID_` |
 | `translation` | 翻译配置：`placeholderMarker` / `reviewMarker` / `batchSize` / `contextLines` / `hints` / `glossary` / `ignoreKeys` / `maxRetries` / `jsonMode` | 见下方 |
+
+Vue 项目把 `include` 加上 `.vue`，例如 `["src/**/*.{ts,vue}"]`；CLI 会分别解析 `<script>` 与模板表达式。
 
 ## 检查规则
 

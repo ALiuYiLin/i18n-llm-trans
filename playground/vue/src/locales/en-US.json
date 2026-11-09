@@ -1,54 +1,35 @@
 {
-  "app": {
-    "title": "i18n Playground",
-    "framework": "Vue 3",
-    "stack": "Vue 3 · Vite · TypeScript · vue-i18n",
-    "tagline": "One interface, translated at runtime."
-  },
-  "languageSwitcher": {
-    "label": "Language"
-  },
-  "hero": {
-    "name": "friend",
-    "greeting": "Hello, {name}!",
-    "description": "This page is built with {framework}. Switch the language below and every label updates instantly — no page reload required."
-  },
-  "status": {
-    "currentLocale": "Current locale",
-    "fallbackLocale": "Fallback locale",
-    "detectionSource": "Initial detection"
-  },
-  "sources": {
-    "storage": "saved preference",
-    "browser": "browser language",
-    "default": "default fallback"
-  },
-  "features": {
-    "title": "Included in this playground",
-    "localeFiles": {
-      "title": "Locale files",
-      "description": "Translations live in src/locales/*.json and are bundled by Vite at build time."
-    },
-    "detection": {
-      "title": "Automatic detection",
-      "description": "The first visit follows your browser language and falls back to en-US."
-    },
-    "switcher": {
-      "title": "Live switching",
-      "description": "The switcher updates the UI, the <html lang> attribute and the document title."
-    },
-    "persistence": {
-      "title": "Remembered choice",
-      "description": "Your selection is stored in localStorage and restored on the next visit."
-    }
-  },
-  "formats": {
-    "title": "Locale-aware formatting",
-    "dateTime": "Date & time",
-    "number": "Number"
-  },
-  "footer": {
-    "note": "Language preference key: {key}",
-    "supported": "Supported locales: {locales}"
-  }
+  "i18n 演练场": "i18n Playground",
+  "同一套界面，运行时切换语言。": "One interface, translated at runtime.",
+  "语言": "Language",
+  "朋友": "friend",
+  "你好，{name}！": "Hello, {name}!",
+  "本页面使用 {framework} 构建。在下方切换语言，所有文案会立即更新，无需刷新页面。": "This page is built with {framework}. Switch the language below and every label updates instantly — no page reload required.",
+  "当前语言": "Current locale",
+  "回退语言": "Fallback locale",
+  "初始识别来源": "Initial detection",
+  "本地保存的偏好": "saved preference",
+  "浏览器语言": "browser language",
+  "默认回退": "default fallback",
+  "本演练场包含": "Included in this playground",
+  "语言资源文件": "Locale files",
+  "翻译存放在 src/locales/*.json 中，键名就是中文原文。": "Translations live in src/locales/*.json and the keys are the Chinese source text.",
+  "自动识别语言": "Automatic detection",
+  "首次访问时跟随浏览器语言，无法识别时使用中文源文案。": "The first visit follows your browser language and falls back to the Chinese source text.",
+  "即时切换": "Live switching",
+  "切换语言会同时更新界面、<html lang> 属性和页面标题。": "The switcher updates the UI, the <html lang> attribute and the document title.",
+  "记住选择": "Remembered choice",
+  "你的选择会写入 localStorage，下次访问时自动恢复。": "Your selection is stored in localStorage and restored on the next visit.",
+  "本地化格式": "Locale-aware formatting",
+  "日期与时间": "Date & time",
+  "数字": "Number",
+  "一词多译": "One source, multiple translations",
+  "同一个中文词在不同场景下可以对应不同的英文，通过 __TRANS_ID 区分。": "The same Chinese word can map to different English strings via __TRANS_ID.",
+  "删除": "Delete",
+  "删除__TRANS_ID_delete": "Delete",
+  "删除__TRANS_ID_remove": "Remove",
+  "永久销毁且不可恢复：删除用户、数据库记录或备份。": "Permanent and irreversible: deleting a user, a database record or a backup.",
+  "仅解除关联，对象仍然存在：把用户移出角色组、从仪表盘移除卡片。": "Only the association is removed while the object remains: removing a user from a role group or a card from a dashboard.",
+  "语言偏好存储键：{key}": "Language preference key: {key}",
+  "已支持语言：{locales}": "Supported locales: {locales}"
 }

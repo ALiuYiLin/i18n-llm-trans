@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { relative } from 'node:path'
 import { glob } from 'tinyglobby'
-import { scanCode } from './scan'
+import { scanCode, scanVueSfc } from './scan'
 import type { DynamicUsage, I18nConfig, Usage } from './types'
 
 export interface ScannedProject {
@@ -35,7 +35,10 @@ export async function scanProject(cwd: string, config: I18nConfig): Promise<Scan
 
   for (const file of files) {
     const code = await readFile(file, 'utf8')
-    const result = scanCode(code, displayFile(cwd, file), config)
+    const filename = displayFile(cwd, file)
+    const result = file.endsWith('.vue')
+      ? scanVueSfc(code, filename, config)
+      : scanCode(code, filename, config)
     usages.push(...result.usages)
     dynamicUsages.push(...result.dynamicUsages)
     for (const literal of result.literals) literals.add(literal)

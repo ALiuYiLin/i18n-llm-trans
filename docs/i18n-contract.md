@@ -6,7 +6,8 @@
 
 参考实现：
 
-- [playground/react/src/i18n/index.ts](../playground/react/src/i18n/index.ts)（React + i18next，完整示例）
+- [playground/react/src/i18n/index.ts](../playground/react/src/i18n/index.ts)（React + i18next）
+- [playground/vue/src/i18n/index.ts](../playground/vue/src/i18n/index.ts)（Vue + vue-i18n）
 - [templates/translator.ts](templates/translator.ts)（可复制到任意项目的核心逻辑）
 
 ## 1. 语言文件格式
@@ -87,8 +88,10 @@ i18n.init({
 
 ## 5. CLI 扫描契约
 
-CLI 用 Babel 静态分析，不是运行时插桩，因此：
+CLI 用 Babel 静态分析（TS/TSX 与 Vue SFC），不是运行时插桩，因此：
 
+- Vue SFC：分别解析 `<script>` / `<script setup>` 和模板表达式（`{{ ... }}`、`:prop="..."`、`@event="..."`）；
+  `v-for="item in items"` 这类不是独立 JS 表达式的指令会被忽略；
 - 只识别 `i18n.config.json` 中 `callers` 列出的函数名（默认 `["t", "translate"]`）；
 - 只处理静态字符串 / 无插值模板字符串作为第一个参数；
 - 第二个参数的字符串/数字或对象里的 `transId.option` 会解析为 `__TRANS_ID`；
@@ -100,7 +103,7 @@ CLI 用 Babel 静态分析，不是运行时插桩，因此：
 
 ```json
 {
-  "include": ["src/**/*.{ts,tsx}"],
+  "include": ["src/**/*.{ts,tsx,vue}"],
   "localesDir": "src/locales",
   "sourceLocale": "zh-CN",
   "targetLocales": ["en-US", "ja-JP"],

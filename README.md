@@ -3,7 +3,7 @@
 一个**与运行时解耦**的 i18n 工作流 CLI：扫描代码里的 `t()` 调用，维护语言 JSON，并在需要时调用
 LLM 生成译文；不提供 React/Vue 运行时包，`t()` 由应用按 [契约](docs/i18n-contract.md) 自行实现。
 
-- **`i18n:check`**：Babel 静态扫描 `t()`，对比源语言 / 目标语言 JSON，报告缺失、未使用、多余；
+- **`i18n:check`**：Babel 静态扫描 `t()`（TS/TSX 与 Vue SFC），对比源语言 / 目标语言 JSON，报告缺失、未使用、多余；
 - **`i18n:fix`**：补源语言 key、给目标语言写 `⟦TODO⟧` 占位、删除未使用 / 多余项；
 - **`i18n:trans`**：通过 OpenAI-compatible LLM 翻译未翻译 key，写出 `⟦REVIEW⟧` 待复核译文；
 - **运行时无关**：Vite / webpack / SSR / 微前端 / React / Vue 都可以，只要满足数据格式与 `t()` 契约。
@@ -14,8 +14,8 @@ LLM 生成译文；不提供 React/Vue 运行时包，`t()` 由应用按 [契约
 而 CLI 真正依赖的只是「JSON 键格式 + `t()` 调用形态」。所以本仓库只维护 CLI，把运行时留给应用：
 
 - 契约与类型模板：[docs/i18n-contract.md](docs/i18n-contract.md)、[docs/templates/translator.ts](docs/templates/translator.ts)
-- 完整参考实现：[playground/react/src/i18n/index.ts](playground/react/src/i18n/index.ts)
-- 对比示例：Vue playground 使用 vue-i18n 的语义化 key
+- React 参考实现：[playground/react/src/i18n/index.ts](playground/react/src/i18n/index.ts)
+- Vue 参考实现：[playground/vue/src/i18n/index.ts](playground/vue/src/i18n/index.ts)
 
 ## 目录结构
 
@@ -33,7 +33,10 @@ i18n-llm-trans/
 │  │  ├─ src/i18n/index.ts       # 本地 t() 参考实现（非发布包）
 │  │  ├─ src/locales/            # zh-CN / en-US / ja-JP
 │  │  └─ i18n.config.json
-│  └─ vue/                       # Vue + vue-i18n（语义化 key，作对比）
+│  └─ vue/                       # Vue + vue-i18n，按契约实现的参考演示
+│     ├─ src/i18n/index.ts       # 本地 t() 参考实现（非发布包）
+│     ├─ src/locales/            # zh-CN / en-US（原文即 key）
+│     └─ i18n.config.json
 ├─ docs/
 │  ├─ i18n-contract.md           # 数据格式 + t() 行为契约
 │  ├─ templates/translator.ts    # 可复制的 t() 核心实现
@@ -54,7 +57,7 @@ pnpm i18n:check
 # 补 key / 占位
 pnpm i18n:fix
 
-# 用 LLM 翻译（先在 playground/react/.env 配置模型）
+# 用 LLM 翻译（先在对应 playground 的 .env 配置模型）
 pnpm i18n:trans
 
 pnpm dev:react    # http://localhost:5174
@@ -63,7 +66,7 @@ pnpm dev:vue      # http://localhost:5173
 
 ## 预览
 
-| Vue 3（语义化 key）                                                                             | React 19（原文即 key + 标记复核）                                                                    |
+| Vue 3（原文即 key）                                                                             | React 19（原文即 key + 标记复核）                                                                    |
 | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | ![Vue playground](docs/vue-preview.png) | ![React playground](docs/react-preview.png) |
 
@@ -87,7 +90,8 @@ pnpm dev:vue      # http://localhost:5173
 
 ## CLI
 
-`packages/i18n-llm-trans-cli` 用 Babel 静态扫描 `t()` 调用，与语言 JSON 对比；扫描逻辑与框架无关。
+`packages/i18n-llm-trans-cli` 用 Babel 静态扫描 `t()` 调用（支持 TS/TSX 与 Vue SFC 的 `<script>` / 模板表达式），
+与语言 JSON 对比；扫描逻辑与框架无关。两个 playground 都接了同一套 CLI 配置，root 脚本会依次执行两边。
 完整参数与配置见 [CLI README](packages/i18n-llm-trans-cli/README.md)。
 
 ```bash
@@ -101,8 +105,8 @@ pnpm i18n:trans          # 翻译未翻译 / 占位 key（需要 .env）
 
 ### 翻译环境（.env）
 
-`trans` 从 `playground/react/.env` 读取 OpenAI-compatible 配置（已 gitignore，模板见
-[.env.example](playground/react/.env.example)）：
+`trans` 从各 playground 的 `.env` 读取 OpenAI-compatible 配置（已 gitignore，模板见
+[react/.env.example](playground/react/.env.example)、[vue/.env.example](playground/vue/.env.example)）：
 
 ```bash
 I18N_LLM_BASE_URL=https://api.deepseek.com/v1
@@ -152,8 +156,15 @@ type Translate = (
 
 ## playground/vue
 
-Vue 应用使用 vue-i18n 的语义化 key（`features.localeFiles.title`），与 React 的「原文即 key」形成对比；
-CLI 目前只面向原文即 key 的模型，Vue 示例保留作对照。
+[playground/vue/src/i18n/index.ts](playground/vue/src/i18n/index.ts) 用 vue-i18n 实现了同一套契约：
+
+- 源语言 `zh-CN` 原文即 key，目标语言 `en-US`；
+- 使用 `messageResolver` 按整串查找（key 里可能包含 `.`、`/`），并自行处理 `__TRANS_ID` 与回退；
+- vue-i18n 默认单花括号 `{name}` 插值，与 CLI 契约一致；
+- CLI 会扫描 `.vue` 的 `<script setup>` 和模板表达式（`{{ t(...) }}`、`:prop="t(...)"`）；
+- 页面同样带 `t('删除', 'delete')` / `t('删除', 'remove')` 一词多译演示。
+
+Vue 和 React 的差异只在运行时实现（vue-i18n / i18next），语言数据格式、标记与 CLI 行为完全一致。
 
 ## 新增语言 / 翻译流程
 

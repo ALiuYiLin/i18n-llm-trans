@@ -1,0 +1,22 @@
+{
+  "include": ["src/**/*.{ts,vue}"],
+  "exclude": [],
+  "localesDir": "src/locales",
+  "sourceLocale": "zh-CN",
+  "targetLocales": ["en-US"],
+  "callers": ["t", "translate"],
+  "transId": {
+    "option": "__TRANS_ID",
+    "separator": "__TRANS_ID_"
+  },
+  "translation": {
+    "placeholderMarker": "⟦TODO⟧",
+    "reviewMarker": "⟦REVIEW⟧",
+    "batchSize": 20,
+    "contextLines": 0,
+    "hints": {
+      "删除__TRANS_ID_remove": "从角色组中移出用户，对象仍然存在，不是销毁数据"
+    },
+    "glossary": {}
+  }
+}
