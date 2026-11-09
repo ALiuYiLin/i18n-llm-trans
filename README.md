@@ -92,7 +92,8 @@ pnpm dev:vue      # http://localhost:5173
 
 `packages/i18n-trans` 用 Babel 静态扫描 `t()` 调用（支持 TS/TSX 与 Vue SFC 的 `<script>` / 模板表达式），
 与语言 JSON 对比；扫描逻辑与框架无关。两个 playground 都接了同一套 CLI 配置，root 脚本会依次执行两边。
-完整参数与配置见 [CLI README](packages/i18n-trans/README.md)。
+完整参数与配置见 [CLI README](packages/i18n-trans/README.zh-CN.md)
+（[English](packages/i18n-trans/README.md)）。
 
 ```bash
 pnpm i18n:check          # 源语言 + 目标语言

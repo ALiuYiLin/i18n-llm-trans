@@ -1,54 +1,44 @@
 # @10coding/i18n-trans
 
-静态扫描 `t()` 调用（Babel；TS/TSX 与 Vue SFC），检查并维护「源语言原文即 key」的语言 JSON 文件的 CLI。
+[English](./README.md) | [简体中文](./README.zh-CN.md)
 
-- 支持 TS/TSX 与 Vue 单文件组件（`<script>` + 模板表达式 `{{ }}` / 指令属性）；
+[![npm version](https://img.shields.io/npm/v/@10coding/i18n-trans.svg)](https://www.npmjs.com/package/@10coding/i18n-trans)
+[![license](https://img.shields.io/npm/l/@10coding/i18n-trans.svg)](https://github.com/ALiuYiLin/i18n-llm-trans/blob/master/packages/i18n-trans/LICENSE)
 
-- 统计代码中的静态 `t()` key，与 `locales/*.json` 对比；
-- 报告源语言缺失 / 未使用、目标语言缺失译文 / 多余 key；
-- `--add` 补源语言 key（identity 值），`--remove` 删除未使用 / 多余的 key；
-- 支持 `__TRANS_ID` 一词多译：自动推导 `删除__TRANS_ID_remove` 这类目标语言 key；
-- `trans` 子命令通过 OpenAI-compatible LLM 翻译未翻译 / 占位 key（`.env` 配置 API）；
-- 纯非交互：CI 里直接跑，靠退出码判断。
+A framework-agnostic CLI for **source-text-as-key** i18n. It scans `t()` calls, keeps locale JSON
+files in sync, and optionally translates missing entries with an OpenAI-compatible LLM.
 
-数据格式与 `t()` 行为契约见 [docs/i18n-contract.md](../../docs/i18n-contract.md)，
-运行时由应用自行实现，本包不提供任何框架绑定。
+- Scans TS/TSX and Vue SFC (`<script>` + template expressions)
+- `check` / `fix` / `trans` in one binary, fully non-interactive
+- Source-text keys, `__TRANS_ID` variants, `{name}` and `{{name}}` interpolation
+- Marker-based review workflow: `⟦TODO⟧` for missing keys, `⟦REVIEW⟧` for AI translations
+- No runtime package and no framework binding — implement `t()` in your app following the contract
 
-## 使用
+## Install
 
 ```bash
 pnpm add -D @10coding/i18n-trans
-
-# 默认检查源语言 + 目标语言
-i18n-trans check
-
-# 只检查源语言 / 只检查目标语言
-i18n-trans check --source
-i18n-trans check --target
-
-# 补源语言缺少的 key、给目标语言补占位 key、删除未使用 / 多余 key
-i18n-trans check --add
-i18n-trans check --add-target
-i18n-trans check --remove
-i18n-trans check --add --add-target --remove
-
-# 给目标语言补 marker 占位 key（之后用 trans 翻译）
-i18n-trans check --target --add-target
-
-# 用 LLM 翻译未翻译 / 占位 key
-i18n-trans trans
-i18n-trans trans --dry-run
 ```
 
-| 参数 | 说明 |
-| --- | --- |
-| `--source` | 只检查源语言 |
-| `--target` | 只检查目标语言 |
-| `--add` | 补源语言缺少的 key，值为 key 本身 |
-| `--add-target` | 补目标语言缺少的 key，值写成 marker 占位（如 `⟦TODO⟧ 你好`） |
-| `--remove` | 删除源语言未使用 key 与目标语言多余 key |
+Node.js `>= 20.19`.
 
-建议在应用 `package.json` 里配置：
+## Quick start
+
+```bash
+# check the source locale + target locales
+npx i18n-trans check
+
+# add missing source keys and ⟦TODO⟧ placeholders for target locales
+npx i18n-trans check --add --add-target
+
+# translate pending entries with an OpenAI-compatible LLM
+npx i18n-trans trans
+
+# remove unused source keys and extra target keys
+npx i18n-trans check --remove
+```
+
+Recommended `package.json` scripts:
 
 ```json
 {
@@ -62,9 +52,25 @@ i18n-trans trans --dry-run
 }
 ```
 
-## 配置
+## Commands
 
-CLI 读取工作目录下的 `i18n.config.json`：
+| Command | Description |
+| --- | --- |
+| `i18n-trans check` | Check source + target locales |
+| `i18n-trans check --source` | Check the source locale only |
+| `i18n-trans check --target` | Check target locales only |
+| `i18n-trans check --add` | Add missing keys to the source locale |
+| `i18n-trans check --add-target` | Add `⟦TODO⟧` placeholders to target locales |
+| `i18n-trans check --remove` | Remove unused source keys / extra target keys |
+| `i18n-trans trans` | Translate pending entries with an LLM |
+| `i18n-trans trans --dry-run` | List translation units without calling the model |
+
+Other `trans` options: `--locale <list>`, `--keys <list>`, `--limit <n>`, `--no-context`,
+`--ignore` (write translations without the `⟦REVIEW⟧` marker), `--env-file <path>`.
+
+## Configuration
+
+The CLI reads `i18n.config.json` from the current working directory:
 
 ```json
 {
@@ -74,124 +80,137 @@ CLI 读取工作目录下的 `i18n.config.json`：
   "sourceLocale": "zh-CN",
   "targetLocales": ["en-US"],
   "callers": ["t", "translate"],
-  "transId": { "option": "__TRANS_ID", "separator": "__TRANS_ID_" }
+  "transId": { "option": "__TRANS_ID", "separator": "__TRANS_ID_" },
+  "translation": {
+    "placeholderMarker": "⟦TODO⟧",
+    "reviewMarker": "⟦REVIEW⟧",
+    "batchSize": 20,
+    "hints": {},
+    "glossary": {}
+  }
 }
 ```
 
-| 字段 | 说明 | 默认值 |
+| Field | Description | Default |
 | --- | --- | --- |
-| `include` | 扫描文件 glob | `["src/**/*.{ts,tsx}"]` |
-| `exclude` | 忽略 glob | 测试文件、`.d.ts` |
-| `localesDir` | 语言 JSON 目录 | `src/locales` |
-| `sourceLocale` | 源语言（必填） | - |
-| `targetLocales` | 目标语言列表 | `localesDir` 下除源语言外的全部文件 |
-| `callers` | 视为翻译调用的函数名 | `["t", "translate"]` |
-| `transId` | 一词多译标记 | `__TRANS_ID` / `__TRANS_ID_` |
-| `translation` | 翻译配置：`placeholderMarker` / `reviewMarker` / `batchSize` / `contextLines` / `hints` / `glossary` / `ignoreKeys` / `maxRetries` / `jsonMode` | 见下方 |
+| `include` | File globs to scan | `["src/**/*.{ts,tsx}"]` |
+| `exclude` | File globs to ignore | test files, `.d.ts` |
+| `localesDir` | Directory containing `<locale>.json` | `src/locales` |
+| `sourceLocale` | Source locale (required) | - |
+| `targetLocales` | Target locales | every file in `localesDir` except the source |
+| `callers` | Function names treated as translation calls | `["t", "translate"]` |
+| `transId` | One-source-multiple-translations marker | `__TRANS_ID` / `__TRANS_ID_` |
+| `translation` | Markers, batch size, context lines, hints, glossary, retries, JSON mode | see above |
 
-Vue 项目把 `include` 加上 `.vue`，例如 `["src/**/*.{ts,vue}"]`；CLI 会分别解析 `<script>` 与模板表达式。
+For Vue projects, add `.vue` to `include`, e.g. `["src/**/*.{ts,vue}"]`; the CLI parses both
+`<script>` blocks and template expressions.
 
-## 检查规则
+## Locale files
 
-**源语言（`i18n:check:source`）**
+The source locale uses the source text as key **and** value; target locales reuse those keys:
 
-- missing：代码里静态 `t('...')` 用到、但源语言 JSON 没有的 key；`--add` 会以 `"key": "key"` 追加；
-- unused：源语言 JSON 有、但代码里既没有静态 `t()` 调用、也没有以字符串字面量出现的 key；
-  `--remove` 会删除。字面量出现也算「使用中」，用于兼容通过数组/映射间接取 key 的写法。
+```json
+// src/locales/zh-CN.json
+{
+  "你好": "你好",
+  "删除": "删除"
+}
+```
 
-**目标语言（`i18n:check:target`）**
+```json
+// src/locales/en-US.json
+{
+  "你好": "Hello",
+  "删除": "Delete",
+  "删除__TRANS_ID_remove": "Remove"
+}
+```
 
-- 期望 key = 源语言全部 key + 代码中通过 `__TRANS_ID` 生成的变体 key（如 `删除__TRANS_ID_remove`）；
-- missing：目标语言缺少的 key，默认只报告；`--add-target` 会用源语言原文作为占位值写入，
-  之后仍需人工 / LLM 翻译（占位值不是译文）；
-- extra：目标语言里不属于上述期望集合的 key，`--remove` 会删除。
+`t('删除', 'remove')` looks up `删除__TRANS_ID_remove` in the target locale, then falls back to
+`删除`, then to the source text. See the full contract:
+[docs/i18n-contract.md](https://github.com/ALiuYiLin/i18n-llm-trans/blob/master/docs/i18n-contract.md).
+A copyable implementation is available at
+[docs/templates/translator.ts](https://github.com/ALiuYiLin/i18n-llm-trans/blob/master/docs/templates/translator.ts).
 
-**动态 key**
+## Check rules
 
-`t(variable)`、`` t(`prefix.${id}`) `` 无法静态分析，只报告、不参与增删判断。
+**Source locale**
 
-## 翻译（trans）
+- **missing**: statically used by `t('...')` but absent from the source JSON; `--add` appends
+  `"key": "key"`;
+- **unused**: present in the source JSON but not found by a static `t()` call or as a string
+  literal in the scanned code; `--remove` deletes it. The literal check avoids deleting keys
+  that are mapped to `t()` dynamically.
 
-`trans` 通过 OpenAI-compatible 的 `/chat/completions` 接口翻译目标语言里未翻译的 key。
+**Target locales**
 
-### `.env`
+- expected keys = all source keys + variant keys generated by `__TRANS_ID`;
+- **missing**: keys absent from the target locale; reported by default, `--add-target` writes
+  `⟦TODO⟧ <source>` placeholders;
+- **extra**: target keys outside the expected set; `--remove` deletes them.
 
-在应用目录（`i18n.config.json` 所在处）创建 `.env`（已 gitignore，参考 `.env.example`）：
+**Dynamic keys** (`t(variable)`, `` t(`prefix.${id}`) ``) are reported but never added or removed.
+
+The full `t()` contract is documented in
+[docs/i18n-contract.md](https://github.com/ALiuYiLin/i18n-llm-trans/blob/master/docs/i18n-contract.md).
+
+## Markers
+
+| Marker | Written by | Meaning |
+| --- | --- | --- |
+| `⟦TODO⟧ 原文` | `check --add-target` | key exists, no translation yet |
+| `⟦REVIEW⟧ translation` | `trans` | AI translation waiting for human review |
+| no marker | human / `trans --ignore` | reviewed translation |
+
+Search `⟦TODO⟧` to find missing translations and `⟦REVIEW⟧` to find AI translations that still
+need review. `trans` never re-translates `⟦REVIEW⟧` values and never overwrites existing translations.
+
+## Translation
+
+`trans` calls an OpenAI-compatible `/chat/completions` endpoint. Credentials are read from `.env`
+in the working directory (gitignored) or from the process environment:
 
 ```bash
 I18N_LLM_BASE_URL=https://api.openai.com/v1
 I18N_LLM_API_KEY=sk-...
 I18N_LLM_MODEL=gpt-4o-mini
-# 可选
+
+# optional
 I18N_LLM_TIMEOUT_MS=60000
 I18N_LLM_MAX_RETRIES=1
 I18N_LLM_JSON_MODE=true
 ```
 
-已有的 `process.env` 优先于 `.env`；也可用 `--env-file <path>` 指定文件。缺变量时直接报错退出（不发网络请求）。
+- untranslated = key missing in the target locale, `⟦TODO⟧ <source>` placeholder, or a legacy
+  value equal to the source text;
+- each request sends a batch of units (`translation.batchSize`, default 20) sequentially and
+  expects a JSON result array; keys, non-empty values and interpolation placeholders are validated;
+- auto-collected code context (`t()` call site) and manual `translation.hints` disambiguate
+  `__TRANS_ID` variants;
+- AI translations are written as `⟦REVIEW⟧ <translation>`; use `--ignore` to write them clean;
+- after translating, the CLI runs `check` once; remaining issues produce exit code 1.
 
-### 未翻译判定
+## Exit codes
 
-- 目标 JSON 缺少该 key；
-- 值是缺失占位：`<placeholderMarker> <源文>`（默认 `⟦TODO⟧ 原文`）；
-- 兼容旧数据：值等于源语言原文也算未翻译（用 `translation.ignoreKeys` 排除本来就应该相同的词）。
-
-两类 marker 是分开的：
-
-| 标记 | 含义 | 处理 |
-| --- | --- | --- |
-| `⟦TODO⟧ 原文` | `--add-target` 补的缺失占位 | `trans` 翻译 |
-| `⟦REVIEW⟧ 译文` | AI 已翻译、等待人工复核 | `trans` 跳过，人工搜索 `⟦REVIEW⟧` 去除 |
-| 无标记译文 | 已翻译 | 跳过 |
-
-判定完全基于 key 集合与标记，不依赖模型。
-
-### 上下文
-
-- 自动：扫描阶段记录了每个 `t()` 的 `file:line`，翻译时把该行（`contextLines` 可扩到前后 N 行）
-  作为 `context` 发给模型；
-- 手工：`translation.hints` 按 key 覆盖/补充语义说明（优先级高于自动片段）。
-
-```json
-"hints": {
-  "删除__TRANS_ID_remove": "从角色组移出用户，不是销毁数据"
-}
-```
-
-### 行为
-
-- 一次请求发送 `unit[]`（受 `translation.batchSize` 限制，串行、不并发），要求返回 `result[]`；
-- 校验响应：key 集合一致、值非空、占位符 token（`{name}` / `{{name}}`，保留花括号样式）与源文一致；
-  失败按 `maxRetries` 重试，
-  仍失败则记录错误、不写入坏数据；
-- AI 译文默认写成 `<reviewMarker> <译文>`（默认 `⟦REVIEW⟧ Hello`），方便全局搜索人工复核；
-  `--ignore` 则直接写入不带标记的译文；
-- 只替换未翻译 / 占位值，**不覆盖已有译文**；
-- 完成后自动跑一次 `i18n-trans check`，仍有缺失时退出码为 1；
-- `--dry-run` 只列出待翻译 unit，不调用模型、不需要 `.env`。
-
-```bash
-i18n-trans trans
-i18n-trans trans --dry-run
-i18n-trans trans --locale en-US --limit 20
-i18n-trans trans --keys "你好啊哈,保存成功"
-i18n-trans trans --no-context
-i18n-trans trans --ignore        # 不写复核 marker
-```
-
-## 退出码
-
-| 退出码 | 含义 |
+| Code | Meaning |
 | --- | --- |
-| `0` | 没有缺失的 key（warnings 不影响退出码） |
-| `1` | 仍有缺失的源语言 key 或目标语言 key |
-| `2` | 配置 / 参数 / 解析错误 |
+| `0` | No missing keys (warnings do not fail the command) |
+| `1` | Missing source keys or target keys remain |
+| `2` | Configuration / argument / parse error |
 
-## 限制
+## Limitations
 
-- 只识别静态字符串字面量（含无插值模板字符串）作为第一个参数；
-- 只识别 `callers` 中列出的函数名，别名（`const { t: tr } = useI18n()`）暂不支持；
-- unused 判断是启发式的：动态 key 无法覆盖，只作为警告，不会让 CI 失败；
-- `--add-target` 只写 marker 占位，真实译文由 `trans` 生成；
-- `trans` 的 AI 译文默认带 marker，人工复核后全局搜索删除；`--ignore` 可跳过该标记；
-- `trans` 不并发请求；上游限流时请调小 `batchSize` 或分次执行。
+- Only static string literals (including template literals without expressions) are recognized as keys;
+- Only function names in `callers` are recognized; aliases such as `const { t: tr } = useI18n()`
+  are not supported yet;
+- unused-key detection is heuristic: dynamic keys are only warnings, not failures;
+- `--add-target` writes placeholders only; real translations come from `trans`;
+- `trans` runs requests sequentially; lower `batchSize` or split runs if the provider rate-limits.
+
+## Links
+
+- Repository: <https://github.com/ALiuYiLin/i18n-llm-trans>
+- Contract: <https://github.com/ALiuYiLin/i18n-llm-trans/blob/master/docs/i18n-contract.md>
+- React example: <https://github.com/ALiuYiLin/i18n-llm-trans/tree/master/playground/react>
+- Vue example: <https://github.com/ALiuYiLin/i18n-llm-trans/tree/master/playground/vue>
+- Issues: <https://github.com/ALiuYiLin/i18n-llm-trans/issues>

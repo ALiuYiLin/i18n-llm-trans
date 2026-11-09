@@ -1,12 +1,42 @@
 {
   "name": "@10coding/i18n-trans",
   "version": "0.1.0",
-  "description": "CLI that scans t() calls with Babel and keeps source-text-key locale files complete.",
-  "type": "module",
+  "description": "CLI that scans t() calls and keeps source-text-key locale files complete, with optional LLM translation.",
+  "keywords": [
+    "i18n",
+    "internationalization",
+    "localization",
+    "translation",
+    "translate",
+    "cli",
+    "llm",
+    "openai",
+    "babel",
+    "i18next",
+    "vue-i18n",
+    "locale",
+    "json",
+    "source-text-key",
+    "trans-id"
+  ],
+  "author": "ALiuYiLin",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ALiuYiLin/i18n-llm-trans.git",
+    "directory": "packages/i18n-trans"
+  },
+  "homepage": "https://github.com/ALiuYiLin/i18n-llm-trans/tree/master/packages/i18n-trans#readme",
+  "bugs": {
+    "url": "https://github.com/ALiuYiLin/i18n-llm-trans/issues"
+  },
+  "type": "module",
   "files": [
     "bin.js",
-    "dist"
+    "dist",
+    "README.md",
+    "README.zh-CN.md",
+    "LICENSE"
   ],
   "bin": {
     "i18n-trans": "./bin.js"
