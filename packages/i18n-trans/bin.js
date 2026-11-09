@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 const distFile = join(dirname(fileURLToPath(import.meta.url)), 'dist', 'bin.js')
 
 if (!existsSync(distFile)) {
-  console.error('[i18n-llm-trans] dist/bin.js is missing. Build the CLI package first (pnpm build).')
+  console.error('[i18n-trans] dist/bin.js is missing. Build the CLI package first (pnpm build).')
   process.exit(1)
 }
 

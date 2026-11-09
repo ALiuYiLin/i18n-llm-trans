@@ -24,7 +24,7 @@ i18n-llm-trans/
 ├─ package.json
 ├─ pnpm-workspace.yaml
 ├─ packages/
-│  └─ i18n-llm-trans-cli/        # @10coding/i18n-llm-trans-cli
+│  └─ i18n-trans/        # @10coding/i18n-trans
 │     ├─ src/                    # scan / check / fix / trans / LLM client
 │     ├─ test/                   # vitest
 │     └─ dist/                   # 构建产物
@@ -90,9 +90,9 @@ pnpm dev:vue      # http://localhost:5173
 
 ## CLI
 
-`packages/i18n-llm-trans-cli` 用 Babel 静态扫描 `t()` 调用（支持 TS/TSX 与 Vue SFC 的 `<script>` / 模板表达式），
+`packages/i18n-trans` 用 Babel 静态扫描 `t()` 调用（支持 TS/TSX 与 Vue SFC 的 `<script>` / 模板表达式），
 与语言 JSON 对比；扫描逻辑与框架无关。两个 playground 都接了同一套 CLI 配置，root 脚本会依次执行两边。
-完整参数与配置见 [CLI README](packages/i18n-llm-trans-cli/README.md)。
+完整参数与配置见 [CLI README](packages/i18n-trans/README.md)。
 
 ```bash
 pnpm i18n:check          # 源语言 + 目标语言

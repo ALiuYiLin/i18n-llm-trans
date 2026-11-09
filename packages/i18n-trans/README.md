@@ -1,4 +1,4 @@
-# @10coding/i18n-llm-trans-cli
+# @10coding/i18n-trans
 
 静态扫描 `t()` 调用（Babel；TS/TSX 与 Vue SFC），检查并维护「源语言原文即 key」的语言 JSON 文件的 CLI。
 
@@ -17,27 +17,27 @@
 ## 使用
 
 ```bash
-pnpm add -D @10coding/i18n-llm-trans-cli
+pnpm add -D @10coding/i18n-trans
 
 # 默认检查源语言 + 目标语言
-i18n-llm-trans check
+i18n-trans check
 
 # 只检查源语言 / 只检查目标语言
-i18n-llm-trans check --source
-i18n-llm-trans check --target
+i18n-trans check --source
+i18n-trans check --target
 
 # 补源语言缺少的 key、给目标语言补占位 key、删除未使用 / 多余 key
-i18n-llm-trans check --add
-i18n-llm-trans check --add-target
-i18n-llm-trans check --remove
-i18n-llm-trans check --add --add-target --remove
+i18n-trans check --add
+i18n-trans check --add-target
+i18n-trans check --remove
+i18n-trans check --add --add-target --remove
 
 # 给目标语言补 marker 占位 key（之后用 trans 翻译）
-i18n-llm-trans check --target --add-target
+i18n-trans check --target --add-target
 
 # 用 LLM 翻译未翻译 / 占位 key
-i18n-llm-trans trans
-i18n-llm-trans trans --dry-run
+i18n-trans trans
+i18n-trans trans --dry-run
 ```
 
 | 参数 | 说明 |
@@ -53,11 +53,11 @@ i18n-llm-trans trans --dry-run
 ```json
 {
   "scripts": {
-    "i18n:check": "i18n-llm-trans check",
-    "i18n:check:source": "i18n-llm-trans check --source",
-    "i18n:check:target": "i18n-llm-trans check --target",
-    "i18n:fix": "i18n-llm-trans check --add --add-target --remove",
-    "i18n:trans": "i18n-llm-trans trans"
+    "i18n:check": "i18n-trans check",
+    "i18n:check:source": "i18n-trans check --source",
+    "i18n:check:target": "i18n-trans check --target",
+    "i18n:fix": "i18n-trans check --add --add-target --remove",
+    "i18n:trans": "i18n-trans trans"
   }
 }
 ```
@@ -167,16 +167,16 @@ I18N_LLM_JSON_MODE=true
 - AI 译文默认写成 `<reviewMarker> <译文>`（默认 `⟦REVIEW⟧ Hello`），方便全局搜索人工复核；
   `--ignore` 则直接写入不带标记的译文；
 - 只替换未翻译 / 占位值，**不覆盖已有译文**；
-- 完成后自动跑一次 `i18n-llm-trans check`，仍有缺失时退出码为 1；
+- 完成后自动跑一次 `i18n-trans check`，仍有缺失时退出码为 1；
 - `--dry-run` 只列出待翻译 unit，不调用模型、不需要 `.env`。
 
 ```bash
-i18n-llm-trans trans
-i18n-llm-trans trans --dry-run
-i18n-llm-trans trans --locale en-US --limit 20
-i18n-llm-trans trans --keys "你好啊哈,保存成功"
-i18n-llm-trans trans --no-context
-i18n-llm-trans trans --ignore        # 不写复核 marker
+i18n-trans trans
+i18n-trans trans --dry-run
+i18n-trans trans --locale en-US --limit 20
+i18n-trans trans --keys "你好啊哈,保存成功"
+i18n-trans trans --no-context
+i18n-trans trans --ignore        # 不写复核 marker
 ```
 
 ## 退出码

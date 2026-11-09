@@ -2,7 +2,7 @@ import { runCheck } from './check'
 import { runTrans } from './trans/translate'
 import type { CheckScope, TransOptions } from './types'
 
-const HELP = `Usage: i18n-llm-trans <command> [options]
+const HELP = `Usage: i18n-trans <command> [options]
 
 Commands:
   check   scan t() calls and compare them with the locale JSON files
@@ -31,10 +31,10 @@ Environment for trans:
   optional: I18N_LLM_TIMEOUT_MS, I18N_LLM_MAX_RETRIES, I18N_LLM_JSON_MODE
 
 Examples:
-  i18n-llm-trans check
-  i18n-llm-trans check --add --add-target --remove
-  i18n-llm-trans trans --dry-run
-  i18n-llm-trans trans --locale en-US
+  i18n-trans check
+  i18n-trans check --add --add-target --remove
+  i18n-trans trans --dry-run
+  i18n-trans trans --locale en-US
 `
 
 async function runCheckCommand(args: string[]): Promise<number> {

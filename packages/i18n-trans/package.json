@@ -1,5 +1,5 @@
 {
-  "name": "@10coding/i18n-llm-trans-cli",
+  "name": "@10coding/i18n-trans",
   "version": "0.1.0",
   "description": "CLI that scans t() calls with Babel and keeps source-text-key locale files complete.",
   "type": "module",
@@ -9,7 +9,7 @@
     "dist"
   ],
   "bin": {
-    "i18n-llm-trans": "./bin.js"
+    "i18n-trans": "./bin.js"
   },
   "scripts": {
     "build": "tsup",
