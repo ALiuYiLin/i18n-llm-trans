@@ -49,11 +49,6 @@ export async function runCheck(options: CheckOptions): Promise<CheckResult> {
 
   const targetLocales =
     config.targetLocales ?? locales.filter((locale) => locale !== config.sourceLocale)
-  for (const locale of targetLocales) {
-    if (!locales.includes(locale)) {
-      throw new Error(`targetLocale "${locale}" not found in ${localesDir}`)
-    }
-  }
 
   const sourceFile = await readLocaleFile(localesDir, config.sourceLocale)
   const sourceKeys = Object.keys(sourceFile.messages)
@@ -120,7 +115,7 @@ export async function runCheck(options: CheckOptions): Promise<CheckResult> {
   const targets: TargetDiff[] = []
   if (options.scope !== 'source') {
     for (const locale of targetLocales) {
-      const targetFile = await readLocaleFile(localesDir, locale)
+      const targetFile = await readLocaleFile(localesDir, locale, { allowMissing: true })
       const targetKeys = new Set(Object.keys(targetFile.messages))
       const missing = [...expectedKeys].filter((key) => !targetKeys.has(key))
       const extra = [...targetKeys].filter((key) => !expectedKeys.has(key))
@@ -147,6 +142,12 @@ export async function runCheck(options: CheckOptions): Promise<CheckResult> {
             removed: [],
           })
         }
+      }
+
+      // A configured target locale that has no file yet is created even when
+      // there are no keys to add (e.g. an empty source locale).
+      if (options.addTarget && !targetFile.exists) {
+        await writeLocaleFile(targetFile)
       }
 
       if (options.remove && extra.length > 0) {

@@ -112,6 +112,24 @@ describe('runTrans', () => {
     expect(calls).toHaveLength(1)
   })
 
+  it('creates a missing target locale file and translates into it', async () => {
+    const files = projectFiles({
+      source: { 你好: '你好' },
+      target: {},
+      code: `export const a = t('你好')`,
+    })
+    delete files['src/locales/en-US.json']
+    const dir = await createProject(files)
+
+    const result = await runTrans(options(dir), {
+      translateBatch: fakeTranslator({ 你好: 'Hello' }),
+    })
+
+    expect(result.translated).toBe(1)
+    expect(result.exitCode).toBe(0)
+    expect(await readMessages(dir, 'en-US')).toEqual({ 你好: '⟦REVIEW⟧ Hello' })
+  })
+
   it('passes auto context and manual hints to the batch translator', async () => {
     const dir = await createProject(
       projectFiles({

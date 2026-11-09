@@ -103,11 +103,6 @@ export async function runTrans(
       `None of the requested locales (${requested.join(', ')}) are configured target locales (${configuredTargets.join(', ')})`,
     )
   }
-  for (const locale of targetLocales) {
-    if (!locales.includes(locale)) {
-      throw new Error(`targetLocale "${locale}" not found in ${localesDir}`)
-    }
-  }
 
   const sourceFile = await readLocaleFile(localesDir, config.sourceLocale)
   const expectedKeys = [...expectedTargetKeys(Object.keys(sourceFile.messages), variants)]
@@ -125,7 +120,11 @@ export async function runTrans(
   const groups: Array<{ locale: string; file: LocaleFile; units: TranslationUnit[] }> = []
 
   for (const locale of targetLocales) {
-    const file = await readLocaleFile(localesDir, locale)
+    const file = await readLocaleFile(localesDir, locale, { allowMissing: true })
+    if (!file.exists && !options.dryRun) {
+      // Create the configured target file even when there is nothing to translate.
+      await writeLocaleFile(file)
+    }
     const units: TranslationUnit[] = []
 
     for (const key of expectedKeys) {
