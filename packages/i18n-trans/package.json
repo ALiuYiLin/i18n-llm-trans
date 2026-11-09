@@ -1,6 +1,6 @@
 {
   "name": "@10coding/i18n-trans",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CLI that scans t() calls and keeps source-text-key locale files complete, with optional LLM translation.",
   "keywords": [
     "i18n",
