@@ -1,5 +1,7 @@
 # i18n 契约（CLI 与运行时解耦）
 
+[English](i18n-contract.en.md) | 简体中文
+
 本仓库只发布 CLI 工具 `@10coding/i18n-trans`，**不提供运行时包**。
 应用可以选择 i18next、vue-i18n、自研实现，跑在 Vite / webpack / SSR / 微前端都可以，
 只要满足下面的数据格式与 `t()` 行为契约，CLI 的 `check` / `fix` / `trans` 就能工作。

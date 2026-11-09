@@ -128,7 +128,7 @@ The source locale uses the source text as key **and** value; target locales reus
 
 `t('删除', 'remove')` looks up `删除__TRANS_ID_remove` in the target locale, then falls back to
 `删除`, then to the source text. See the full contract:
-[docs/i18n-contract.md](https://github.com/ALiuYiLin/i18n-llm-trans/blob/master/docs/i18n-contract.md).
+[docs/i18n-contract.en.md](https://github.com/ALiuYiLin/i18n-llm-trans/blob/master/docs/i18n-contract.en.md).
 A copyable implementation is available at
 [docs/templates/translator.ts](https://github.com/ALiuYiLin/i18n-llm-trans/blob/master/docs/templates/translator.ts).
 
@@ -155,7 +155,7 @@ A copyable implementation is available at
 **Dynamic keys** (`t(variable)`, `` t(`prefix.${id}`) ``) are reported but never added or removed.
 
 The full `t()` contract is documented in
-[docs/i18n-contract.md](https://github.com/ALiuYiLin/i18n-llm-trans/blob/master/docs/i18n-contract.md).
+[docs/i18n-contract.en.md](https://github.com/ALiuYiLin/i18n-llm-trans/blob/master/docs/i18n-contract.en.md).
 
 ## Markers
 
@@ -213,7 +213,7 @@ I18N_LLM_JSON_MODE=true
 ## Links
 
 - Repository: <https://github.com/ALiuYiLin/i18n-llm-trans>
-- Contract: <https://github.com/ALiuYiLin/i18n-llm-trans/blob/master/docs/i18n-contract.md>
+- Contract: <https://github.com/ALiuYiLin/i18n-llm-trans/blob/master/docs/i18n-contract.en.md>
 - React example: <https://github.com/ALiuYiLin/i18n-llm-trans/tree/master/playground/react>
 - Vue example: <https://github.com/ALiuYiLin/i18n-llm-trans/tree/master/playground/vue>
 - Issues: <https://github.com/ALiuYiLin/i18n-llm-trans/issues>
