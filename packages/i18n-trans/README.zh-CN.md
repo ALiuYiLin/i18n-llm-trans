@@ -144,6 +144,8 @@ Vue 项目把 `.vue` 加进 `include`，例如 `["src/**/*.{ts,vue}"]`；CLI 会
 
 - 期望 key = 源语言全部 key + 代码中由 `__TRANS_ID` 生成的变体 key；
 - **missing**：目标语言缺少的 key；默认只报告，`--add-target` 写入 `⟦TODO⟧ <原文>` 占位；
+- **文件不存在 / 为空**：配置的目标语言文件缺失或内容为空时按空 locale 处理；
+  `--add-target` / `fix` 会创建并写入占位，`trans` 也会在翻译前创建文件；
 - **extra**：不属于期望集合的 key；`--remove` 会删除。
 
 **动态 key**（`t(variable)`、`` t(`prefix.${id}`) ``）只报告，不参与增删。

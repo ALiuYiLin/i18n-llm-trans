@@ -8,6 +8,13 @@ export interface LocaleFile {
   indent: string
   newline: string
   original: string
+  /** False when the file did not exist and was read as an empty locale. */
+  exists: boolean
+}
+
+export interface ReadLocaleOptions {
+  /** Treat a missing file as an empty locale instead of throwing. */
+  allowMissing?: boolean
 }
 
 function detectFormat(raw: string): { indent: string; newline: string } {
@@ -31,20 +38,36 @@ export async function listLocales(localesDir: string): Promise<string[]> {
   }
 }
 
-export async function readLocaleFile(localesDir: string, locale: string): Promise<LocaleFile> {
+export async function readLocaleFile(
+  localesDir: string,
+  locale: string,
+  options: ReadLocaleOptions = {},
+): Promise<LocaleFile> {
   const path = join(localesDir, `${locale}.json`)
   let original: string
+  let exists = true
   try {
     original = await readFile(path, 'utf8')
-  } catch {
-    throw new Error(`Locale file not found: ${path}`)
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT' && options.allowMissing) {
+      original = ''
+      exists = false
+    } else {
+      throw new Error(`Locale file not found: ${path}`)
+    }
   }
 
   let parsed: unknown
-  try {
-    parsed = JSON.parse(original)
-  } catch (error) {
-    throw new Error(`Invalid JSON in ${path}: ${(error as Error).message}`)
+  if (original.trim() === '') {
+    // Missing or empty locale files are valid empty locales; `--add` /
+    // `--add-target` can fill them in.
+    parsed = {}
+  } else {
+    try {
+      parsed = JSON.parse(original)
+    } catch (error) {
+      throw new Error(`Invalid JSON in ${path}: ${(error as Error).message}`)
+    }
   }
 
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
@@ -60,7 +83,7 @@ export async function readLocaleFile(localesDir: string, locale: string): Promis
   }
 
   const { indent, newline } = detectFormat(original)
-  return { locale, path, messages, indent, newline, original }
+  return { locale, path, messages, indent, newline, original, exists }
 }
 
 export function serializeLocale(file: LocaleFile): string {
@@ -74,5 +97,6 @@ export async function writeLocaleFile(file: LocaleFile): Promise<boolean> {
   if (next === file.original) return false
   await writeFile(file.path, next, 'utf8')
   file.original = next
+  file.exists = true
   return true
 }

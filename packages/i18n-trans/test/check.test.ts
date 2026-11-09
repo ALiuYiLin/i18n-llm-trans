@@ -127,6 +127,66 @@ describe('runCheck', () => {
     )
   })
 
+  it('creates a missing target locale file with --add-target', async () => {
+    const files = projectFiles({
+      source: { 你好: '你好' },
+      target: {},
+      code: `export const a = t('你好')`,
+    })
+    delete files['src/locales/en-US.json']
+    const dir = await createProject(files)
+
+    const result = await run(dir, { addTarget: true })
+
+    expect(result.exitCode).toBe(0)
+    expect(await readMessages(dir, 'en-US')).toEqual({ 你好: '⟦TODO⟧ 你好' })
+  })
+
+  it('treats a missing target locale file as empty without --add-target', async () => {
+    const files = projectFiles({
+      source: { 你好: '你好' },
+      target: {},
+      code: `export const a = t('你好')`,
+    })
+    delete files['src/locales/en-US.json']
+    const dir = await createProject(files)
+
+    const result = await run(dir)
+
+    expect(result.exitCode).toBe(1)
+    expect(result.targets[0]?.missing).toEqual(['你好'])
+  })
+
+  it('fills an empty target locale file with --add-target', async () => {
+    const files = projectFiles({
+      source: { 你好: '你好' },
+      target: {},
+      code: `export const a = t('你好')`,
+    })
+    files['src/locales/en-US.json'] = ''
+    const dir = await createProject(files)
+
+    const result = await run(dir, { addTarget: true })
+
+    expect(result.exitCode).toBe(0)
+    expect(await readMessages(dir, 'en-US')).toEqual({ 你好: '⟦TODO⟧ 你好' })
+  })
+
+  it('--add fills an empty source locale file', async () => {
+    const files = projectFiles({
+      source: {},
+      target: {},
+      code: `export const a = t('你好')`,
+    })
+    files['src/locales/zh-CN.json'] = ''
+    const dir = await createProject(files)
+
+    const result = await run(dir, { add: true })
+
+    expect(await readMessages(dir, 'zh-CN')).toEqual({ 你好: '你好' })
+    expect(result.source?.missing.map((item) => item.key)).toEqual(['你好'])
+  })
+
   it('--remove drops unused source keys and extra target keys', async () => {
     const dir = await createProject(
       projectFiles({
