@@ -154,6 +154,8 @@ export interface TransOptions {
   dryRun?: boolean
   /** Disable auto-collected code context. */
   useContext?: boolean
+  /** Write translations without the review marker. */
+  ignore?: boolean
   /** Custom `.env` file path. */
   envFile?: string
   quiet?: boolean

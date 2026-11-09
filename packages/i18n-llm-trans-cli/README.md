@@ -126,8 +126,11 @@ I18N_LLM_JSON_MODE=true
 ### 未翻译判定
 
 - 目标 JSON 缺少该 key；
-- 值是 marker 占位（`translation.placeholderMarker`，默认 `⟦TODO⟧`）；
+- 值是 marker 占位：`<marker> <源文>`（`translation.placeholderMarker`，默认 `⟦TODO⟧ 原文`）；
 - 兼容旧数据：值等于源语言原文也算未翻译（用 `translation.ignoreKeys` 排除本来就应该相同的词）。
+
+marker + 译文（如 `⟦TODO⟧ Hello`）代表「AI 已翻译、等待人工复核」，`trans` 不会重复翻译；
+人工用编辑器全局搜索 `⟦TODO⟧` 去掉标记即可。
 
 判定完全基于 key 集合与标记，不依赖模型。
 
@@ -148,6 +151,8 @@ I18N_LLM_JSON_MODE=true
 - 一次请求发送 `unit[]`（受 `translation.batchSize` 限制，串行、不并发），要求返回 `result[]`；
 - 校验响应：key 集合一致、值非空、`{name}` 等占位符一致；失败按 `maxRetries` 重试，
   仍失败则记录错误、不写入坏数据；
+- AI 译文默认写成 `<marker> <译文>`（如 `⟦TODO⟧ Hello`），方便编辑器全局搜索人工复核；
+  `--ignore` 则直接写入不带标记的译文；
 - 只替换未翻译 / 占位值，**不覆盖已有译文**；
 - 完成后自动跑一次 `i18n-llm-trans check`，仍有缺失时退出码为 1；
 - `--dry-run` 只列出待翻译 unit，不调用模型、不需要 `.env`。
@@ -158,6 +163,7 @@ i18n-llm-trans trans --dry-run
 i18n-llm-trans trans --locale en-US --limit 20
 i18n-llm-trans trans --keys "你好啊哈,保存成功"
 i18n-llm-trans trans --no-context
+i18n-llm-trans trans --ignore        # 不写复核 marker
 ```
 
 ## 退出码
@@ -174,4 +180,5 @@ i18n-llm-trans trans --no-context
 - 只识别 `callers` 中列出的函数名，别名（`const { t: tr } = useI18n()`）暂不支持；
 - unused 判断是启发式的：动态 key 无法覆盖，只作为警告，不会让 CI 失败；
 - `--add-target` 只写 marker 占位，真实译文由 `trans` 生成；
+- `trans` 的 AI 译文默认带 marker，人工复核后全局搜索删除；`--ignore` 可跳过该标记；
 - `trans` 不并发请求；上游限流时请调小 `batchSize` 或分次执行。

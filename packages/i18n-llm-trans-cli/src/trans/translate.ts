@@ -6,6 +6,7 @@ import { loadLlmEnv } from '../env'
 import { buildVariants, dedupeUsages, expectedTargetKeys } from '../keys'
 import { createOpenAiChatClient, type ChatClient } from '../llm/openai'
 import { listLocales, readLocaleFile, writeLocaleFile, type LocaleFile } from '../locales'
+import { formatPlaceholder, isPlaceholderValue } from '../placeholder'
 import { scanProject } from '../project'
 import { buildMessages, parseTranslationResponse, validateTranslations } from './prompt'
 import type {
@@ -137,17 +138,17 @@ export async function runTrans(
       const current = file.messages[key]
 
       if (current !== undefined) {
-        const markerPlaceholder = current === marker || current.startsWith(`${marker} `)
-        const identical = current === sourceText
-        if (!markerPlaceholder && (!identical || ignoreKeys.has(key))) {
+        // A key allowed to stay identical to the source is already fine.
+        if (current === sourceText && ignoreKeys.has(key)) {
           skipped += 1
           continue
         }
-      }
-
-      if (current === undefined && ignoreKeys.has(key)) {
-        skipped += 1
-        continue
+        // Placeholder values still need translation; marker-prefixed translations
+        // are waiting for manual review and must not be translated again.
+        if (!isPlaceholderValue(current, marker, sourceText)) {
+          skipped += 1
+          continue
+        }
       }
 
       const usage = usageIndex.get(key)
@@ -241,7 +242,11 @@ export async function runTrans(
       }
 
       for (const unit of batch) {
-        group.file.messages[unit.key] = translations[unit.key]
+        const value = translations[unit.key]
+        // Mark AI translations for manual review unless --ignore was passed.
+        group.file.messages[unit.key] = options.ignore
+          ? value
+          : formatPlaceholder(marker, value)
       }
       await writeLocaleFile(group.file)
       translated += batch.length

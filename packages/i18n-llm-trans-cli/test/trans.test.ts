@@ -105,9 +105,9 @@ describe('runTrans', () => {
     expect(result.exitCode).toBe(0)
     expect(await readMessages(dir, 'en-US')).toMatchObject({
       你好: 'Hello',
-      保存: 'Save',
-      删除: 'Delete',
-      删除__TRANS_ID_remove: 'Remove',
+      保存: '⟦TODO⟧ Save',
+      删除: '⟦TODO⟧ Delete',
+      删除__TRANS_ID_remove: '⟦TODO⟧ Remove',
     })
     expect(calls).toHaveLength(1)
   })
@@ -246,6 +246,46 @@ describe('runTrans', () => {
 
     expect(calls[0]?.units.map((unit) => unit.key)).toEqual(['保存'])
     expect(result.translated).toBe(1)
-    expect(await readMessages(dir, 'en-US')).toEqual({ 保存: 'Save' })
+    expect(await readMessages(dir, 'en-US')).toEqual({ 保存: '⟦TODO⟧ Save' })
+  })
+
+  it('--ignore writes translations without the review marker', async () => {
+    const dir = await createProject(
+      projectFiles({
+        source: { 你好: '你好' },
+        target: {},
+        code: `export const a = t('你好')`,
+      }),
+    )
+
+    const result = await runTrans(options(dir, { ignore: true }), {
+      translateBatch: fakeTranslator({ 你好: 'Hello' }),
+    })
+
+    expect(result.translated).toBe(1)
+    expect(await readMessages(dir, 'en-US')).toEqual({ 你好: 'Hello' })
+  })
+
+  it('does not re-translate marker-prefixed AI translations', async () => {
+    const dir = await createProject(
+      projectFiles({
+        source: { 你好: '你好' },
+        target: { 你好: '⟦TODO⟧ Hello' },
+        code: `export const a = t('你好')`,
+      }),
+    )
+
+    let called = false
+    const result = await runTrans(options(dir), {
+      translateBatch: async () => {
+        called = true
+        return { 你好: 'Hello again' }
+      },
+    })
+
+    expect(called).toBe(false)
+    expect(result.translated).toBe(0)
+    expect(result.exitCode).toBe(0)
+    expect(await readMessages(dir, 'en-US')).toEqual({ 你好: '⟦TODO⟧ Hello' })
   })
 })

@@ -21,6 +21,7 @@ trans options:
   --limit <n>         translate at most n units
   --dry-run           print units without calling the LLM
   --no-context        disable auto-collected code-context snippets
+  --ignore            write translations without the ⟦TODO⟧ review marker
   --env-file <path>   custom .env path (default: ./.env)
 
 Environment for trans:
@@ -89,6 +90,7 @@ async function runTransCommand(args: string[]): Promise<number> {
   let limit: number | undefined
   let dryRun = false
   let useContext = true
+  let ignore = false
   let envFile: string | undefined
 
   for (let index = 0; index < args.length; index += 1) {
@@ -137,6 +139,9 @@ async function runTransCommand(args: string[]): Promise<number> {
       case '--no-context':
         useContext = false
         break
+      case '--ignore':
+        ignore = true
+        break
       case '--env-file': {
         const value = args[index + 1]
         if (!value) {
@@ -160,6 +165,7 @@ async function runTransCommand(args: string[]): Promise<number> {
     limit,
     dryRun,
     useContext,
+    ignore,
     envFile,
   }
 
